@@ -1,0 +1,43 @@
+sfx "move" {
+    type: note
+    frequency: 440
+    duration: 0.1
+    wave: sine
+}
+
+sfx "collision" {
+    type: note
+    frequency: 100
+    duration: 0.2
+    wave: square
+}
+
+sfx "victory" {
+    sequence {
+        note C4 0.1
+        note E4 0.1
+        note G4 0.1
+        note C5 0.2
+    }
+}
+
+sfx "collect" {
+    type: note
+    frequency: 880
+    duration: 0.1
+    wave: sine
+}
+
+sfx "unlock" {
+    type: note
+    frequency: 440
+    duration: 0.3
+    wave: square
+}
+
+sfx "mechanism" {
+    type: note
+    frequency: 110
+    duration: 0.4
+    wave: square
+}

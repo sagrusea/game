@@ -1,0 +1,44 @@
+track "background" {
+    tempo: 120
+    loop: true
+    
+    sequence {
+        // Main melody
+        note C4 1.0
+        note E4 0.5
+        note G4 0.5
+        note A4 1.0
+        note G4 0.5
+        note E4 0.5
+        note D4 0.5
+        note F4 0.5
+        note A4 1.0
+        note G4 0.5
+        note E4 0.5
+        
+        // Harmony
+        note E4 1.0
+        note G4 0.5
+        note B4 0.5
+        note C5 1.0
+        note B4 0.5
+        note G4 0.5
+        
+        // Bass line
+        bass C3 1.0
+        bass G3 1.0
+        bass A3 1.0
+        bass F3 1.0
+        
+        // Simple drums
+        drum kick 0.5
+        drum snare 0.5
+        drum hihat 0.25
+        drum kick 0.5
+        drum snare 0.5
+        drum hihat 0.25
+        drum kick 0.5
+        drum snare 0.5
+        drum hihat 0.25
+    }
+}

@@ -1,0 +1,9 @@
+menu.start {
+    title = "Escape Game"
+    options = [
+        "Start Game",
+        "Instructions",
+        "Exit"
+    ]
+    car = assets/sprites/car.ass
+}
