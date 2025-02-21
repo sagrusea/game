@@ -1,0 +1,80 @@
+sprite "floor" {
+    size: 8x8
+    colors {
+        D: #222222
+        B: #1A1A1A
+    }
+    frames {
+        idle {
+            D B D B D B D B
+            B D B D B D B D
+            D B D B D B D B
+            B D B D B D B D
+            D B D B D B D B
+            B D B D B D B D
+            D B D B D B D B
+            B D B D B D B D
+        }
+    }
+}
+
+sprite "finish" {
+    size: 8x8
+    colors {
+        G: #00FF00
+        L: #00AA00
+        W: #FFFFFF
+    }
+    frames {
+        idle {
+            G G G G G G G G
+            G L W W W W L G
+            G W L L L L W G
+            G W L G G L W G
+            G W L G G L W G
+            G W L L L L W G
+            G L W W W W L G
+            G G G G G G G G
+        }
+        glow {
+            W G G G G G G W
+            G L W W W W L G
+            G W L L L L W G
+            G W L G G L W G
+            G W L G G L W G
+            G W L L L L W G
+            G L W W W W L G
+            W G G G G G G W
+        }
+    }
+}
+
+sprite "plate" {
+    size: 8x8
+    colors {
+        D: #444444
+        M: #333333
+    }
+    frames {
+        idle {
+            . . . . . . . .
+            . . . . . . . .
+            . . D D D D . .
+            . D M M M M D .
+            . D M M M M D .
+            . . D D D D . .
+            . . . . . . . .
+            . . . . . . . .
+        }
+        pressed {
+            . . . . . . . .
+            . . . . . . . .
+            . . . . . . . .
+            . . D D D D . .
+            . . M M M M . .
+            . . . . . . . .
+            . . . . . . . .
+            . . . . . . . .
+        }
+    }
+}

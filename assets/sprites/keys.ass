@@ -1,0 +1,40 @@
+sprite "key_yellow" {
+    size: 8x8
+    colors {
+        Y: #FFD700
+        G: #DAA520
+    }
+    frames {
+        idle {
+            . . . Y Y . . .
+            . . Y G G Y . .
+            . . Y G G Y . .
+            . . . Y Y . . .
+            . . . Y Y . . .
+            . . Y Y Y . . .
+            . Y Y . Y Y . .
+            Y Y . . . Y Y .
+        }
+    }
+}
+
+sprite "key_blue" {
+    size: 8x8
+    colors {
+        B: #0000FF
+        D: #000099
+    }
+    frames {
+        // Same pattern as yellow key
+        idle {
+            . . . B B . . .
+            . . B D D B . .
+            . . B D D B . .
+            . . . B B . . .
+            . . . B B . . .
+            . . B B B . . .
+            . B B . B B . .
+            B B . . . B B .
+        }
+    }
+}

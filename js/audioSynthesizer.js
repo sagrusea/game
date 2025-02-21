@@ -8,6 +8,7 @@ class AudioSynthesizer {
             'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77
         };
         this.soundEffects = new Map();
+        this.volume = 1.0;
     }
 
     init() {
@@ -119,6 +120,10 @@ class AudioSynthesizer {
         });
     }
 
+    setVolume(volume) {
+        this.volume = volume;
+    }
+
     playNote(note, duration) {
         if (!this.audioContext) return;
         
@@ -138,7 +143,7 @@ class AudioSynthesizer {
         oscillator.type = 'sine';
         
         const now = this.audioContext.currentTime;
-        gainNode.gain.setValueAtTime(0.3, now); // Reduced volume
+        gainNode.gain.setValueAtTime(0.3 * this.volume, now); // Reduced volume
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
         
         oscillator.start(now);
@@ -163,7 +168,7 @@ class AudioSynthesizer {
             const duration = parseFloat(effect.duration);
             const now = this.audioContext.currentTime;
             
-            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.setValueAtTime(0.3 * this.volume, now);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
             
             oscillator.start(now);
@@ -192,7 +197,7 @@ class AudioSynthesizer {
         }
         
         const now = this.audioContext.currentTime;
-        gainNode.gain.setValueAtTime(0.5, now);
+        gainNode.gain.setValueAtTime(0.5 * this.volume, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
         
         oscillator.start(now);

@@ -1,0 +1,81 @@
+sprite "torch" {
+    size: 8x8
+    colors {
+        R: #FF6600
+        Y: #FFCC00
+        B: #444444
+    }
+    frames {
+        idle {
+            . . R . . . . .
+            . R Y R . . . .
+            . . R . . . . .
+            . . B . . . . .
+            . . B . . . . .
+            . . B . . . . .
+            . B B B . . . .
+            . . . . . . . .
+        }
+        flicker {
+            . . Y . . . . .
+            . Y R Y . . . .
+            . . Y . . . . .
+            . . B . . . . .
+            . . B . . . . .
+            . . B . . . . .
+            . B B B . . . .
+            . . . . . . . .
+        }
+    }
+}
+
+sprite "crystal" {
+    size: 8x8
+    colors {
+        P: #FF00FF
+        D: #AA00AA
+        W: #FFFFFF
+    }
+    frames {
+        idle {
+            . . . P . . . .
+            . . P P P . . .
+            . P D P D P . .
+            P D D P D D P .
+            . P D P D P . .
+            . . P P P . . .
+            . . . P . . . .
+            . . . . . . . .
+        }
+        glow {
+            . . . W . . . .
+            . . P P P . . .
+            . P D P D P . .
+            P D D P D D P .
+            . P D P D P . .
+            . . P P P . . .
+            . . . W . . . .
+            . . . . . . . .
+        }
+    }
+}
+
+sprite "vines" {
+    size: 8x8
+    colors {
+        G: #00AA00
+        D: #008800
+    }
+    frames {
+        idle {
+            G . . . . G . .
+            G . . G . G . .
+            G G . G . G . .
+            . G G G . G G .
+            . . G . . . G .
+            . G G . . G G .
+            . G . . . G . .
+            G . . . G . . .
+        }
+    }
+}

@@ -1,0 +1,19 @@
+sprite "wall" {
+    size: 8x8
+    colors {
+        D: #444444
+        L: #666666
+    }
+    frames {
+        idle {
+            D L D L D L D L
+            L D L D L D L D
+            D L D L D L D L
+            L D L D L D L D
+            D L D L D L D L
+            L D L D L D L D
+            D L D L D L D L
+            L D L D L D L D
+        }
+    }
+}

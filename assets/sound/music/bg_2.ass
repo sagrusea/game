@@ -1,0 +1,23 @@
+track "puzzle" {
+    tempo: 90
+    loop: true
+    
+    sequence {
+        // Ambient melody
+        note E4 2.0
+        note G4 2.0
+        note B4 2.0
+        note A4 2.0
+        note G4 1.0
+        note E4 1.0
+        
+        // Soft bass
+        bass E3 2.0
+        bass B3 2.0
+        
+        // Light percussion
+        drum hihat 0.5
+        drum hihat 0.5
+        drum snare 1.0
+    }
+}

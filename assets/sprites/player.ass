@@ -1,0 +1,30 @@
+sprite "player" {
+    size: 8x8
+    colors {
+        R: #FF0000
+        B: #000000
+        W: #FFFFFF
+    }
+    frames {
+        idle {
+            . . R R R R . .
+            . R R R R R R .
+            R R W W R R R R
+            R R W B R R R R
+            R R R R R R R R
+            . R R R R R R .
+            . . R R R R . .
+            . R . . . . R .
+        }
+        move {
+            . . R R R R . .
+            . R R R R R R .
+            R R W W R R R R
+            R R W B R R R R
+            R R R R R R R R
+            . R R R R R R .
+            . R . R R . R .
+            R . . . . . . R
+        }
+    }
+}

@@ -1,0 +1,62 @@
+sprite "door_normal" {
+    size: 8x8
+    colors {
+        Y: #886600
+        G: #664400
+        M: #AA8800
+    }
+    frames {
+        idle {
+            Y Y Y Y Y Y Y Y
+            Y G M M M M G Y
+            Y M G G G G M Y
+            Y M G Y Y G M Y
+            Y M G Y Y G M Y
+            Y M G G G G M Y
+            Y G M M M M G Y
+            Y Y Y Y Y Y Y Y
+        }
+    }
+}
+
+sprite "door_blue" {
+    size: 8x8
+    colors {
+        B: #000066
+        D: #000044
+        L: #0000AA
+    }
+    frames {
+        idle {
+            B B B B B B B B
+            B D L L L L D B
+            B L D D D D L B
+            B L D B B D L B
+            B L D B B D L B
+            B L D D D D L B
+            B D L L L L D B
+            B B B B B B B B
+        }
+    }
+}
+
+sprite "door_mechanism" {
+    size: 8x8
+    colors {
+        G: #444444
+        S: #666666
+        M: #888888
+    }
+    frames {
+        idle {
+            G G G G G G G G
+            G S M M M M S G
+            G M S G G S M G
+            G M G S S G M G
+            G M G S S G M G
+            G M S G G S M G
+            G S M M M M S G
+            G G G G G G G G
+        }
+    }
+}

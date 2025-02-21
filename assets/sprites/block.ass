@@ -1,0 +1,19 @@
+sprite "block" {
+    size: 8x8
+    colors {
+        B: #8B4513
+        D: #654321
+    }
+    frames {
+        idle {
+            B B B B B B B B
+            B D D D D D D B
+            B D B B B B D B
+            B D B D D B D B
+            B D B D D B D B
+            B D B B B B D B
+            B D D D D D D B
+            B B B B B B B B
+        }
+    }
+}

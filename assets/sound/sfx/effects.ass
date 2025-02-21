@@ -18,6 +18,8 @@ sfx "victory" {
         note E4 0.1
         note G4 0.1
         note C5 0.2
+        note E5 0.3
+        note G5 0.4
     }
 }
 

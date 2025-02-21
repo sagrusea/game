@@ -1,0 +1,27 @@
+track "victory" {
+    tempo: 140
+    loop: true
+    
+    sequence {
+        // Upbeat melody
+        note C4 0.5
+        note E4 0.5
+        note G4 0.5
+        note C5 1.0
+        note B4 0.5
+        note G4 0.5
+        note A4 1.0
+        
+        // Dynamic bass
+        bass C3 0.5
+        bass G3 0.5
+        bass A3 0.5
+        bass F3 0.5
+        
+        // Energetic drums
+        drum kick 0.25
+        drum snare 0.25
+        drum hihat 0.25
+        drum kick 0.25
+    }
+}
