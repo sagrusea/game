@@ -11,12 +11,66 @@
         <h1>Escape Game</h1>
         <canvas id="gameCanvas"></canvas>
     </div>
+    
+    <div class="completion-overlay" id="completionOverlay">
+        <div class="completion-content">
+            <h2>Level Complete!</h2>
+            <div class="completion-stars">★★★</div>
+            <button onclick="levelManager.nextLevel()">Next Level</button>
+            <button onclick="levelManager.restartLevel()">Replay Level</button>
+        </div>
+    </div>
+
+    <div class="options-overlay" id="optionsOverlay">
+        <div class="options-content">
+            <div class="options-tabs">
+                <button class="tab-button active" data-tab="controls">Controls</button>
+                <button class="tab-button" data-tab="info">Info</button>
+            </div>
+            
+            <div class="tab-content" id="controlsTab">
+                <h2>Options</h2>
+                <div class="option-item">
+                    <span>Music: </span>
+                    <button class="option-button" id="toggleMusic">ON</button>
+                </div>
+                <div class="option-item">
+                    <span>Music Volume: </span>
+                    <button class="option-button" id="volumeDown">-</button>
+                    <span id="volumeValue">100%</span>
+                    <button class="option-button" id="volumeUp">+</button>
+                </div>
+                <div class="option-item">
+                    <span>Sound Effects: </span>
+                    <button class="option-button" id="toggleSFX">ON</button>
+                </div>
+                <div class="option-item">
+                    <span>SFX Volume: </span>
+                    <button class="option-button" id="sfxVolumeDown">-</button>
+                    <span id="sfxVolumeValue">100%</span>
+                    <button class="option-button" id="sfxVolumeUp">+</button>
+                </div>
+            </div>
+
+            <div class="tab-content" id="infoTab" style="display: none;">
+                <h2>Game Info</h2>
+                <div class="info-content">
+                    <p>Version: 1.0.0</p>
+                    <p>Created by: Sagrusea</p>
+                </div>
+            </div>
+
+            <button class="option-button" id="closeOptions">Back</button>
+        </div>
+    </div>
+
     <script src="js/audioSynthesizer.js"></script>
     <script src="js/audioManager.js"></script>
     <script src="js/engine.js"></script>
     <script src="js/levelManager.js"></script>
     <script src="js/menuManager.js"></script>
     <script src="js/spriteManager.js"></script>
+    <script src="js/pixelSpriteRenderer.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

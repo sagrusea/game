@@ -3,7 +3,18 @@ menu.start {
     options = [
         "Start Game",
         "Instructions",
+        "Options",
         "Exit"
     ]
     car = assets/sprites/car.ass
+}
+
+menu.options {
+    title = "Options"
+    options = [
+        "Music: ON/OFF",
+        "Music Volume: 100%",
+        "Sound Effects: ON/OFF",
+        "Back"
+    ]
 }

@@ -35,6 +35,13 @@ class LevelManager {
                 ['.', '.', '.', '.', 'b', '.', '.', '.', 'p', '.', '.', '.', '.', '.'],
                 ['.', 'x', 'x', '.', 'x', '.', 'x', '.', 'x', '.', 'x', 'x', '.', '.'],
                 ['.', '.', '.', '.', '.', '.', 'D', '.', '.', '.', '.', '.', '.', 'f']
+            ],
+            level5: [
+                ["c", "x", ".", ".", ".", "x", "x", "x", "x", "x", "x", "x", ".", "."],
+                [".", "x", "K", "x", ".", ".", ".", ".", ".", ".", ".", "x", ".", "."],
+                [".", "x", ".", "x", ".", ".", ".", ".", ".", ".", ".", "x", ".", "."],
+                [".", "x", ".", "x", ".", ".", ".", ".", ".", ".", ".", "x", "x", "x"],
+                [".", ".", ".", "x", ".", ".", ".", ".", ".", ".", ".", "B", ".", "f"]
             ]
         };
         this.currentLevel = null;
@@ -47,6 +54,33 @@ class LevelManager {
         };
         
         this.movableBlocks = new Map(); // Store positions of movable blocks
+        this.currentLevelName = null;
+        this.completionOverlay = document.getElementById('completionOverlay');
+    }
+
+    showCompletion() {
+        this.completionOverlay.classList.add('show-completion');
+        this.engine.audio.synthesizer.playSoundEffect('victory');
+    }
+
+    hideCompletion() {
+        this.completionOverlay.classList.remove('show-completion');
+    }
+
+    nextLevel() {
+        this.hideCompletion();
+        const levelNames = Object.keys(this.levels);
+        const currentIndex = levelNames.indexOf(this.currentLevelName);
+        if (currentIndex < levelNames.length - 1) {
+            this.loadLevel(levelNames[currentIndex + 1]);
+        } else {
+            this.engine.gameState = 'start';
+        }
+    }
+
+    restartLevel() {
+        this.hideCompletion();
+        this.loadLevel(this.currentLevelName);
     }
 
     loadLevel(levelName) {
@@ -69,6 +103,7 @@ class LevelManager {
                     }
                 }
             }
+            this.currentLevelName = levelName;
             console.log('Level loaded successfully');
         } else {
             console.error('Level not found:', levelName);
@@ -119,11 +154,7 @@ class LevelManager {
                 this.checkPressurePlates();
                 
                 if (this.currentLevel[newPos.y][newPos.x] === 'f') {
-                    this.engine.audio.synthesizer.playSoundEffect('victory');
-                    setTimeout(() => {
-                        alert('Level Complete!');
-                        this.engine.gameState = 'start';
-                    }, 500);
+                    this.showCompletion();
                 }
             } else {
                 this.engine.audio.synthesizer.playSoundEffect('collision');
@@ -245,7 +276,7 @@ class LevelManager {
         this.engine.clear();
         this.engine.drawRect(0, 0, this.engine.canvas.width, this.engine.canvas.height, '#333');
         
-        // Calculate tile size based on canvas and level size
+        // Calculate tile size
         const tileWidth = this.engine.canvas.width / this.currentLevel[0].length;
         const tileHeight = this.engine.canvas.height / this.currentLevel.length;
         const tileSize = Math.min(tileWidth, tileHeight);
@@ -254,76 +285,92 @@ class LevelManager {
         const offsetX = (this.engine.canvas.width - tileSize * this.currentLevel[0].length) / 2;
         const offsetY = (this.engine.canvas.height - tileSize * this.currentLevel.length) / 2;
 
-        // Draw tiles with sprites
+        // Draw level tiles
         for (let y = 0; y < this.currentLevel.length; y++) {
             for (let x = 0; x < this.currentLevel[y].length; x++) {
                 const tileX = offsetX + x * tileSize;
                 const tileY = offsetY + y * tileSize;
 
                 // Draw floor sprite for all tiles
-                this.engine.sprites.drawSprite('floor', tileX, tileY, tileSize, tileSize);
+                this.engine.pixelSprites.drawSprite('floor', tileX, tileY, tileSize, tileSize);
 
-                // Draw tile content
+                // Draw tile content using pixel sprites
                 switch(this.currentLevel[y][x]) {
                     case 'x':
+                        this.engine.pixelSprites.drawSprite('wall', tileX, tileY, tileSize, tileSize);
                         break;
-                    case 'L': // Normal lock
-                        this.engine.drawRect(tileX, tileY, tileSize, tileSize, '#886600');
+                    case 'k':
+                        this.engine.pixelSprites.drawSprite('key_yellow', tileX, tileY, tileSize, tileSize);
                         break;
-                    case 'B': // Blue door
-                        this.engine.drawRect(tileX, tileY, tileSize, tileSize, '#000066');
+                    case 'K':
+                        this.engine.pixelSprites.drawSprite('key_blue', tileX, tileY, tileSize, tileSize);
                         break;
-                    case 'R': // Red door
-                        this.engine.drawRect(tileX, tileY, tileSize, tileSize, '#660000');
+                    case 'L':
+                        this.engine.pixelSprites.drawSprite('door_normal', tileX, tileY, tileSize, tileSize);
                         break;
-                    case 'p': // Pressure plate
-                        this.engine.drawRect(tileX + tileSize/4, tileY + tileSize/4, 
-                                          tileSize/2, tileSize/4, '#444');
+                    case 'B':
+                        this.engine.pixelSprites.drawSprite('door_blue', tileX, tileY, tileSize, tileSize);
                         break;
-                    case 'D': // Door (for mechanisms)
-                        this.engine.drawRect(tileX, tileY, tileSize, tileSize, '#444');
+                    case 'p':
+                        this.engine.pixelSprites.drawSprite('plate', tileX, tileY, tileSize, tileSize, 
+                            this.isPlatePressed(x, y) ? 'pressed' : 'idle');
                         break;
-                }
-
-                // Draw player
-                if (x === this.engine.playerPosition.x && y === this.engine.playerPosition.y) {
-                    this.engine.drawRect(tileX, tileY, tileSize, tileSize, 'red');
+                    case 'D':
+                        this.engine.pixelSprites.drawSprite('door_mechanism', tileX, tileY, tileSize, tileSize);
+                        break;
+                    case 'f':
+                        const frame = Math.floor(Date.now() / 500) % 2 === 0 ? 'idle' : 'glow';
+                        this.engine.pixelSprites.drawSprite('finish', tileX, tileY, tileSize, tileSize, frame);
+                        break;
                 }
             }
         }
 
         // Draw movable blocks
         for (const [_, block] of this.movableBlocks) {
-            const tileX = offsetX + block.x * tileSize;
-            const tileY = offsetY + block.y * tileSize;
-            this.engine.drawRect(tileX, tileY, tileSize, tileSize, '#8B4513');
+            const blockX = offsetX + block.x * tileSize;
+            const blockY = offsetY + block.y * tileSize;
+            this.engine.pixelSprites.drawSprite('block', blockX, blockY, tileSize, tileSize);
         }
 
         // Draw player
         if (this.engine.playerPosition) {
             const playerX = offsetX + this.engine.playerPosition.x * tileSize;
             const playerY = offsetY + this.engine.playerPosition.y * tileSize;
-            this.engine.drawRect(playerX, playerY, tileSize, tileSize, 'red');
+            
+            // Use 'move' frame if player is moving, otherwise 'idle'
+            const frame = this.isMoving ? 'move' : 'idle';
+            this.engine.pixelSprites.drawSprite('player', playerX, playerY, tileSize, tileSize, frame);
         }
 
         // Draw inventory
         this.drawInventory();
     }
 
+    isPlatePressed(x, y) {
+        const blockKey = `${x},${y}`;
+        return this.movableBlocks.has(blockKey);
+    }
+
     drawInventory() {
         const padding = 20;
-        const iconSize = 30;
+        const iconSize = 40;
         
-        // Draw keys count
-        this.engine.drawText(`Keys: ${this.inventory.keys}`, 
-                           padding + iconSize, padding + iconSize/2, 20, 'white');
+        // Draw keys count with yellow key sprite
+        if (this.inventory.keys > 0) {
+            this.engine.pixelSprites.drawSprite('key_yellow', padding, padding, iconSize, iconSize);
+            this.engine.drawText(`x${this.inventory.keys}`, 
+                               padding + iconSize + 10, 
+                               padding + iconSize/2, 
+                               20, 'white');
+        }
         
         // Draw special keys
         if (this.inventory.hasBlueKey) {
-            this.engine.drawRect(padding, padding + iconSize, iconSize, iconSize, 'blue');
-        }
-        if (this.inventory.hasRedKey) {
-            this.engine.drawRect(padding, padding + iconSize * 2, iconSize, iconSize, 'red');
+            this.engine.pixelSprites.drawSprite('key_blue', 
+                                              padding, 
+                                              padding + iconSize + 10, 
+                                              iconSize, iconSize);
         }
     }
 }

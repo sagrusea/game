@@ -21,3 +21,41 @@ track "puzzle" {
         drum snare 1.0
     }
 }
+
+track "mysterious" {
+    tempo: 100
+    loop: true
+    
+    sequence {
+        // Main melody (lead)
+        instrument lead
+        note E4 0.5
+        note G4 0.5
+        note B4 1.0
+        note A4 0.5
+        note G4 0.5
+        
+        // Harmonic pad
+        instrument pad
+        note E3 2.0
+        note G3 2.0
+        
+        // Bass line
+        instrument bass
+        note E2 1.0
+        note G2 1.0
+        note A2 1.0
+        note B2 1.0
+        
+        // Plucked accent notes
+        instrument pluck
+        note B4 0.25
+        note E5 0.25
+        note G5 0.25
+        
+        // Drums
+        drum kick 0.5
+        drum snare 0.5
+        drum hihat 0.25
+    }
+}

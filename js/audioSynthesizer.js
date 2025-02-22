@@ -9,6 +9,13 @@ class AudioSynthesizer {
         };
         this.soundEffects = new Map();
         this.volume = 1.0;
+        this.instruments = {
+            piano: { type: 'sine', attack: 0.02, decay: 0.1, sustain: 0.7, release: 0.1 },
+            bass: { type: 'triangle', attack: 0.05, decay: 0.2, sustain: 0.8, release: 0.2 },
+            lead: { type: 'square', attack: 0.01, decay: 0.1, sustain: 0.6, release: 0.1 },
+            pad: { type: 'sine', attack: 0.3, decay: 0.3, sustain: 0.8, release: 0.5 },
+            pluck: { type: 'sawtooth', attack: 0.01, decay: 0.1, sustain: 0.3, release: 0.1 }
+        };
     }
 
     init() {
@@ -124,28 +131,39 @@ class AudioSynthesizer {
         this.volume = volume;
     }
 
-    playNote(note, duration) {
+    playNote(note, duration, instrument = 'piano') {
         if (!this.audioContext) return;
         
         const frequency = this.noteToFreq[note];
-        if (!frequency || !isFinite(frequency)) {
-            console.error('Invalid note frequency:', note);
-            return;
-        }
+        if (!frequency) return;
 
+        const instSettings = this.instruments[instrument] || this.instruments.piano;
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
         
-        oscillator.connect(gainNode);
+        // Add filter for tone shaping
+        const filter = this.audioContext.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = instrument === 'bass' ? 500 : 2000;
+
+        // Connect nodes
+        oscillator.connect(filter);
+        filter.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
         
+        oscillator.type = instSettings.type;
         oscillator.frequency.value = frequency;
-        oscillator.type = 'sine';
-        
+
         const now = this.audioContext.currentTime;
-        gainNode.gain.setValueAtTime(0.3 * this.volume, now); // Reduced volume
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        const { attack, decay, sustain, release } = instSettings;
         
+        // ADSR envelope
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(this.volume, now + attack);
+        gainNode.gain.linearRampToValueAtTime(sustain * this.volume, now + attack + decay);
+        gainNode.gain.setValueAtTime(sustain * this.volume, now + duration - release);
+        gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
         oscillator.start(now);
         oscillator.stop(now + duration);
     }

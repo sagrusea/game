@@ -5,6 +5,16 @@ class AudioManager {
         this.isPlaying = false;
         this.isMuted = false;
         this.initialized = false;
+        this.currentTrack = 0;
+        this.tracks = [
+            'assets/sound/music/bg_1.ass',
+            'assets/sound/music/bg_2.ass',
+            'assets/sound/music/bg_3.ass'
+        ];
+        this.volume = 1.0;
+        this.sfxEnabled = true;
+        this.currentSequenceTimeout = null; // Add this line to track the current sequence timeout
+        this.sfxVolume = 1.0;
     }
 
     async init() {
@@ -16,7 +26,7 @@ class AudioManager {
     }
 
     async loadBackgroundMusic() {
-        this.track = await this.synthesizer.loadTrack('assets/sound/music/bg_1.ass');
+        this.track = await this.synthesizer.loadTrack(this.tracks[this.currentTrack]);
         await this.synthesizer.loadSoundEffects('assets/sound/sfx/effects.ass');
     }
 
@@ -39,8 +49,8 @@ class AudioManager {
                 this.synthesizer.playDrum(event.drumType, event.duration * beatDuration);
             }
 
-            // Schedule next note
-            setTimeout(() => {
+            // Store the timeout so we can clear it later
+            this.currentSequenceTimeout = setTimeout(() => {
                 playSequence((index + 1) % this.track.sequence.length);
             }, event.duration * beatDuration * 1000);
         };
@@ -50,6 +60,11 @@ class AudioManager {
 
     stopBackgroundMusic() {
         this.isPlaying = false;
+        // Clear the current sequence timeout
+        if (this.currentSequenceTimeout) {
+            clearTimeout(this.currentSequenceTimeout);
+            this.currentSequenceTimeout = null;
+        }
     }
 
     toggleMute() {
@@ -57,6 +72,39 @@ class AudioManager {
         if (this.isMuted) {
             this.stopBackgroundMusic();
         } else {
+            this.playBackgroundMusic();
+        }
+    }
+
+    setVolume(volume) {
+        this.volume = volume;
+        this.synthesizer.setVolume(volume);
+    }
+
+    setSfxEnabled(enabled) {
+        this.sfxEnabled = enabled;
+    }
+
+    setSfxVolume(volume) {
+        this.sfxVolume = volume;
+    }
+
+    playSoundEffect(name) {
+        if (this.sfxEnabled && this.synthesizer) {
+            this.synthesizer.playSoundEffect(name, this.sfxVolume);
+        }
+    }
+
+    async nextTrack() {
+        // Stop current track completely
+        this.stopBackgroundMusic();
+        
+        // Switch to next track
+        this.currentTrack = (this.currentTrack + 1) % this.tracks.length;
+        await this.loadBackgroundMusic();
+        
+        // Start new track if we were playing before
+        if (!this.isMuted) {
             this.playBackgroundMusic();
         }
     }

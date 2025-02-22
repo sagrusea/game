@@ -25,3 +25,48 @@ track "victory" {
         drum kick 0.25
     }
 }
+
+track "energetic" {
+    tempo: 140
+    loop: true
+    
+    sequence {
+        // Fast-paced melody
+        instrument lead
+        note C5 0.25
+        note E5 0.25
+        note G5 0.5
+        note F5 0.25
+        note E5 0.25
+        note D5 0.5
+        
+        // Supporting harmony
+        instrument piano
+        note C4 1.0
+        note G4 1.0
+        note F4 1.0
+        note G4 1.0
+        
+        // Dancing bassline
+        instrument bass
+        note C3 0.5
+        note G3 0.5
+        note A3 0.5
+        note G3 0.5
+        
+        // Rhythmic plucks
+        instrument pluck
+        note E4 0.25
+        note G4 0.25
+        note C5 0.25
+        note B4 0.25
+        
+        // Energetic drums
+        drum kick 0.25
+        drum snare 0.5
+        drum hihat 0.125
+        drum kick 0.25
+        drum snare 0.5
+        drum hihat 0.125
+    }
+}
