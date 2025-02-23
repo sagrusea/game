@@ -17,6 +17,12 @@ class LevelManager {
         this.levelCompleted = false;  // Add this line
         this.spikes = new Map(); // Store spike states: { pos: string, extended: boolean, nextChange: number }
         this.loadLevels();
+        this.lastDamageTime = 0;
+        this.damageCooldown = 1000; // 1 second cooldown between damage
+        this.failureShowing = false;
+        this.failureDelay = 2000; // Time to show failure screen
+        this.phrases = [];
+        this.loadPhrases();
     }
 
     async loadLevels() {
@@ -27,6 +33,26 @@ class LevelManager {
         } catch (error) {
             console.error('Failed to load levels:', error);
         }
+    }
+
+    async loadPhrases() {
+        try {
+            const response = await fetch('./assets/phrases.txt');
+            const text = await response.text();
+            this.phrases = text.split('\n')
+                .map(line => line.trim())
+                .filter(line => line && !line.startsWith('//'));
+            console.log('Phrases loaded:', this.phrases.length);
+        } catch (error) {
+            console.error('Failed to load phrases:', error);
+            this.phrases = ['Great job!']; // Fallback phrase
+        }
+    }
+
+    getRandomPhrase() {
+        if (this.phrases.length === 0) return 'Great job!';
+        const randomIndex = Math.floor(Math.random() * this.phrases.length);
+        return this.phrases[randomIndex];
     }
 
     showCompletion() {
@@ -87,6 +113,9 @@ class LevelManager {
                 nextButton.onclick(); // Simulate button click when timer ends
             }
         }, 1000);
+
+        // Update completion phrase
+        document.getElementById('completionPhrase').textContent = this.getRandomPhrase();
     }
 
     hideCompletion() {
@@ -129,6 +158,8 @@ class LevelManager {
             this.inventory = { keys: 0, hasBlueKey: false, hasRedKey: false };
             this.movableBlocks.clear();
             this.spikes.clear();
+            // Reset health on new level
+            this.engine.currentHealth = this.engine.maxHealth;
             
             // Find starting position (first 'c' in the level)
             for (let y = 0; y < this.currentLevel.length; y++) {
@@ -201,9 +232,10 @@ class LevelManager {
                 
                 // Check if player moved onto extended spikes
                 const spikeState = this.spikes.get(`${newPos.x},${newPos.y}`);
-                if (spikeState && spikeState.extended) {
-                    this.restartLevel();
-                    return;
+                if (spikeState && spikeState.extended && 
+                    now - this.lastDamageTime >= this.damageCooldown) {
+                    this.lastDamageTime = now;
+                    this.engine.damage();
                 }
                 
                 if (this.currentLevel[newPos.y][newPos.x] === 'f') {
@@ -224,7 +256,7 @@ class LevelManager {
         const tile = this.currentLevel[pos.y][pos.x];
         
         // Check for walls and locked doors
-        if (tile === 'x' || tile === 'D') return false;  // Added 'D' to block movement
+        if (tile === 'x' || tile === 'D' || tile === 'P') return false;  // Added 'D' to block movement
         if (tile === 'L' && !this.engine.hasKey('yellow')) return false;
         if (tile === 'B' && !this.engine.hasKey('blue')) return false;
         if (tile === 'R' && !this.engine.hasKey('red')) return false;
@@ -315,20 +347,40 @@ class LevelManager {
 
     updateSpikes() {
         const now = Date.now();
+        if (now - this.lastDamageTime < this.damageCooldown) return;
+
         this.spikes.forEach((spike, pos) => {
             if (now >= spike.nextChange) {
                 spike.extended = !spike.extended;
-                spike.nextChange = now + Math.random() * 1500 + 1000; // Random between 1000-2500ms
+                spike.nextChange = now + Math.random() * 1500 + 1000;
                 
-                // If player is on spikes when they extend, restart level
                 const [x, y] = pos.split(',').map(Number);
                 if (spike.extended && 
                     this.engine.playerPosition.x === x && 
                     this.engine.playerPosition.y === y) {
-                    this.restartLevel();
+                    this.lastDamageTime = now;
+                    this.engine.damage();
                 }
             }
         });
+    }
+
+    drawHealthBar() {
+        const padding = 10;
+        const heartSize = 32;
+        const spacing = 5;
+        
+        for (let i = 0; i < this.engine.maxHealth; i++) {
+            const frame = i < this.engine.currentHealth ? 'full' : 'empty';
+            this.engine.pixelSprites.drawSprite(
+                'heart',
+                this.engine.canvas.width - (padding + heartSize) * (i + 1),
+                padding,
+                heartSize,
+                heartSize,
+                frame
+            );
+        }
     }
 
     drawLevel() {
@@ -365,6 +417,9 @@ class LevelManager {
                     case 'x':
                         this.engine.pixelSprites.drawSprite('wall', tileX, tileY, tileSize, tileSize);
                         break;
+                    case 'P':
+                        this.engine.pixelSprites.drawSprite('plank_wall', tileX, tileY, tileSize, tileSize);
+                        break;
                     case 'k':
                         this.engine.pixelSprites.drawSprite('key_yellow', tileX, tileY, tileSize, tileSize);
                         break;
@@ -399,6 +454,9 @@ class LevelManager {
                         const spikeFrame = spikeState && spikeState.extended ? 'extended' : 'idle';
                         this.engine.pixelSprites.drawSprite('spikes', tileX, tileY, tileSize, tileSize, spikeFrame);
                         break;
+                    case 'I':
+                        this.engine.pixelSprites.drawSprite('plank_floor', tileX, tileY, tileSize, tileSize);
+                        break;
                 }
             }
         }
@@ -420,6 +478,41 @@ class LevelManager {
 
         // Draw inventory
         this.drawInventory();
+
+        // Draw health bar last so it's always on top
+        this.drawHealthBar();
+
+        // Draw failure message if active
+        if (this.failureShowing) {
+            const ctx = this.engine.ctx;
+            const centerX = this.engine.canvas.width / 2;
+            const centerY = this.engine.canvas.height / 2;
+            
+            // Draw semi-transparent red background
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, this.engine.canvas.width, this.engine.canvas.height);
+            
+            // Draw failure text
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw text shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.font = 'bold 52px Arial';
+            ctx.fillText('You Failed!', centerX + 2, centerY - 28);
+            ctx.font = '24px Arial';
+            ctx.fillText('Restarting level...', centerX + 2, centerY + 22);
+            
+            // Draw main text
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 52px Arial';
+            ctx.fillText('You Failed!', centerX, centerY - 30);
+            ctx.font = '24px Arial';
+            ctx.fillText('Restarting level...', centerX, centerY + 20);
+            
+            ctx.restore();
+        }
     }
 
     isPlatePressed(x, y) {
@@ -457,5 +550,24 @@ class LevelManager {
             this.engine.pixelSprites.drawSprite('key_red', padding, yPos, iconSize, iconSize);
             ctx.fillText(`x${this.engine.inventory.redKeys}`, padding + textOffset, yPos + iconSize/2);
         }
+    }
+
+    showFailure() {
+        if (this.failureShowing) return;
+        
+        console.log('Showing failure screen');
+        this.failureShowing = true;
+        this.levelCompleted = true;
+        
+        // Stop player movement immediately
+        this.engine.playerPosition = { ...this.engine.playerPosition };
+        
+        setTimeout(() => {
+            console.log('Failure timeout complete, restarting level');
+            this.failureShowing = false;
+            this.levelCompleted = false;
+            this.engine.currentHealth = this.engine.maxHealth;
+            this.restartLevel();
+        }, this.failureDelay);
     }
 }

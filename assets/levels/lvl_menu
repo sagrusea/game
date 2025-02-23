@@ -19,3 +19,11 @@ menu.options {
         "Back"
     ]
 }
+
+menu.shop {
+    title = "Shop"
+    options = [
+        "No items available",
+        "Back"
+    ]
+}

@@ -28,6 +28,9 @@ class GameEngine {
         this.lastFPSUpdate = performance.now();
         this.shopManager = new ShopManager(this);
         this.isShopOpen = false;
+        this.maxHealth = 3;
+        this.currentHealth = 3;
+        this.levelManager = null; // Add this line
         
         window.addEventListener('resize', () => this.setFullscreen());
         
@@ -128,8 +131,7 @@ class GameEngine {
     isMouseOver(x, y, width, height) {
         return this.mousePos.x > x - width/2 &&
                this.mousePos.x < x + width/2 &&
-               this.mousePos.y > y - height/2 &&
-               this.mousePos.y < y + height/2;
+               this.mousePos.y > y - height/2;
     }
 
     isKeyPressed(key) {
@@ -305,6 +307,31 @@ class GameEngine {
         }
     }
 
+    setLevelManager(levelManager) {
+        this.levelManager = levelManager;
+    }
+
+    damage() {
+        if (this.currentHealth <= 0) return; // Prevent damage when already dead
+        
+        this.currentHealth--;
+        console.log('Health after damage:', this.currentHealth);
+        
+        if (this.currentHealth <= 0) {
+            this.currentHealth = 0; // Ensure health doesn't go below 0
+            if (this.levelManager) {
+                this.levelManager.showFailure();
+                this.audio.synthesizer.playSoundEffect('failure');
+            }
+        } else {
+            this.audio.synthesizer.playSoundEffect('collision');
+        }
+    }
+
+    heal() {
+        this.currentHealth = Math.min(this.maxHealth, this.currentHealth + 1);
+    }
+
     gameLoop(timestamp) {
         const deltaTime = timestamp - this.lastTime;
         this.lastTime = timestamp;
@@ -320,7 +347,7 @@ class GameEngine {
             }
         }
 
-        if (this.gameState === 'playing') {
+        if (this.gameState === 'playing' && this.levelManager) { // Add safety check
             this.clear();
             this.levelManager.drawLevel(); // FPS is drawn inside drawLevel
             this.drawFPS(); // Make sure FPS is drawn last

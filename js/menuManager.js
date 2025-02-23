@@ -4,7 +4,7 @@ class MenuManager {
         this.levelManager = null; // Will be set from script.js
         this.menuConfig = {
             title: "Escape Game",
-            options: ["Start Game", "Instructions", "Options", "Exit"] // Added "Options"
+            options: ["Start Game", "Instructions", "Options","Shop", "Exit"] // Added "Options"
         };
         this.sfxEnabled = true;
         this.volume = 1.0;

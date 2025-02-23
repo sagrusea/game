@@ -15,6 +15,7 @@ sprite "floor" {
             D B D B D B D B
             B D B D B D B D
         }
+
     }
 }
 
@@ -75,6 +76,27 @@ sprite "plate" {
             . . . . . . . .
             . . . . . . . .
             . . . . . . . .
+        }
+    }
+}
+
+sprite "plank_floor" {
+    size: 8x8
+    colors {
+        A: #8B4513
+        B: #A0522D
+        C: #6B4423
+    }
+    frames {
+        idle {
+            B B A B B A B B
+            B A B B A B B A
+            A B B A B B A B
+            B A B B A B B A
+            B B A B B A B B
+            A B B A B B A B
+            B A B B A B B A
+            B B A B B A B B
         }
     }
 }

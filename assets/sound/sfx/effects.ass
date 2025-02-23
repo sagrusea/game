@@ -77,3 +77,11 @@ sfx "win_melody" {
         note C5 0.6
     }
 }
+
+sfx "failure" {
+    sequence {
+        note C3 0.1
+        note A2 0.1
+        note F2 0.3
+    }
+}

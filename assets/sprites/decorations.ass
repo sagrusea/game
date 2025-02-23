@@ -79,3 +79,34 @@ sprite "vines" {
         }
     }
 }
+
+sprite "heart" {
+    size: 8x8
+    colors {
+        R: #FF0000
+        D: #990000
+        E: #666666
+    }
+    frames {
+        empty {
+            . . . . . . . .
+            . E . E . E . .
+            E . E . E . E .
+            E . . . . . E .
+            . E . . . E . .
+            . . E . E . . .
+            . . . E . . . .
+            . . . . . . . .
+        }
+        full {
+            . . . . . . . .
+            . R . R . R . .
+            R D R D R D R .
+            R D D D D D R .
+            . R D D D R . .
+            . . R D R . . .
+            . . . R . . . .
+            . . . . . . . .
+        }
+    }
+}

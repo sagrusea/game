@@ -235,22 +235,15 @@ class AudioSynthesizer {
         this.volume = volume;
     }
 
-    playNote(note, duration, instrument = 'piano') {
+    playNote(note, duration, instrument = 'piano', startTime = null) {
         if (!this.audioContext) return;
         
         const frequency = this.noteToFreq[note];
-        if (!frequency || !isFinite(frequency)) {
-            console.error('Invalid frequency for note:', note);
-            return;
-        }
+        if (!frequency) return;
         
-        if (!isFinite(duration) || duration <= 0) {
-            console.error('Invalid duration:', duration);
-            return;
-        }
+        const now = startTime || this.audioContext.currentTime;
 
         const instSettings = this.instruments[instrument] || this.instruments.piano;
-        const now = this.audioContext.currentTime;
 
         // Create master gain node
         const masterGain = this.audioContext.createGain();
@@ -351,7 +344,10 @@ class AudioSynthesizer {
         const effect = this.soundEffects.get(name);
         if (!effect) return;
 
+        const now = this.audioContext.currentTime;
+
         if (effect.type === 'note') {
+            // Single note effect
             const oscillator = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
             
@@ -362,13 +358,26 @@ class AudioSynthesizer {
             oscillator.type = effect.wave || 'sine';
             
             const duration = parseFloat(effect.duration);
-            const now = this.audioContext.currentTime;
             
             gainNode.gain.setValueAtTime(0.3 * this.volume, now);
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
             
             oscillator.start(now);
             oscillator.stop(now + duration);
+        } else if (effect.sequence) {
+            // Sequence of notes
+            let timeOffset = 0;
+            effect.sequence.forEach(noteEvent => {
+                if (noteEvent.type === 'note') {
+                    this.playNote(
+                        noteEvent.note,
+                        parseFloat(noteEvent.duration),
+                        'piano',
+                        now + timeOffset
+                    );
+                    timeOffset += parseFloat(noteEvent.duration);
+                }
+            });
         }
     }
 
