@@ -100,3 +100,63 @@ sprite "plank_floor" {
         }
     }
 }
+sprite "stone_floor" {
+    size: 8x8
+    colors {
+        A: #717171
+        B: #555555
+        C: #656565
+        D: #787878
+        E: #6e6e6e
+        F: #666666
+    }
+    frames {
+        idle {
+            A C C A C B C A
+            D D A E E E E E
+            A A A A C C C A
+            C C B C A E E E
+            A A B B B B A A
+            A D D D D D A C
+            E E F F F A A A
+            A A E E D D D D
+        }
+    }
+}
+sprite "stone" {
+    size: 8x8
+    colors {
+        A: #717171
+        B: #676767
+        C: #6F6F6F
+        D: #646464
+        E: #5B5B5B
+        F: #636363
+        G: #777777
+        H: #767676
+        I: #727272
+        J: #6C6C6C
+        K: #6E6E6E
+        L: #666666
+        M: #656565
+        N: #6D6D6D
+        O: #707070
+        P: #696969
+        Q: #757575
+        R: #686868
+        S: #6B6B6B
+        T: #6A6A6A
+    }
+    frames {
+        idle {
+            A B B C D E F C
+            G H I C J J J K
+            I I A A B B B C
+            L D E M C N N K
+            A O P B B P C O
+            A H Q Q Q H I R
+            C C S P T I A C
+            A O K N H G G G
+        }
+    }
+}

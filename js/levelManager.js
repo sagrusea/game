@@ -420,6 +420,9 @@ class LevelManager {
                     case 'P':
                         this.engine.pixelSprites.drawSprite('plank_wall', tileX, tileY, tileSize, tileSize);
                         break;
+                    case 's':
+                        this.engine.pixelSprites.drawSprite('stone', tileX, tileY, tileSize, tileSize);
+                        break;
                     case 'k':
                         this.engine.pixelSprites.drawSprite('key_yellow', tileX, tileY, tileSize, tileSize);
                         break;

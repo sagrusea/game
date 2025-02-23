@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprite Converter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Sprite Converter</h1>
+        <div class="upload-section">
+            <input type="file" id="fileInput" accept=".png,.piskel">
+            <div class="sprite-settings">
+                <input type="text" id="spriteName" placeholder="Sprite name">
+                <div class="size-inputs">
+                    <input type="number" id="spriteWidth" placeholder="Width" value="8">
+                    <span>x</span>
+                    <input type="number" id="spriteHeight" placeholder="Height" value="8">
+                </div>
+            </div>
+            <button id="convertBtn">Convert</button>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+        <div class="preview-section">
+            <div class="preview">
+                <h3>Original</h3>
+                <canvas id="originalPreview"></canvas>
+            </div>
+            <div class="preview">
+                <h3>Converted Preview</h3>
+                <canvas id="convertedPreview"></canvas>
+            </div>
+        </div>
+        <div class="output-section">
+            <h3>Output (.ass format)</h3>
+            <textarea id="outputText" readonly></textarea>
+            <button id="copyBtn">Copy to Clipboard</button>
+            <button id="downloadBtn">Download .ass File</button>
+        </div>
+    </div>
+    <script src="converter.js"></script>
+</body>
+</html>
