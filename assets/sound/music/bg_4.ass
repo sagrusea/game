@@ -1,0 +1,38 @@
+track "action" {
+    tempo: 150
+    loop: true
+    
+    sequence {
+        // Fast-paced main melody
+        instrument lead
+        note D4 0.25
+        note F4 0.25
+        note A4 0.5
+        note G4 0.25
+        note F4 0.25
+        note E4 0.5
+        note D4 0.25
+        note F4 0.25
+        
+        // Energetic harmony
+        instrument synth
+        note D5 0.5
+        note A4 0.5
+        note F4 0.5
+        note D4 0.5
+        
+        // Dynamic bassline
+        instrument bass
+        note D3 0.25
+        note A3 0.25
+        note D3 0.25
+        note A3 0.25
+        
+        // Percussion
+        drum kick 0.25
+        drum snare 0.25
+        drum hihat 0.125
+        drum kick 0.25
+        drum snare 0.25
+    }
+}

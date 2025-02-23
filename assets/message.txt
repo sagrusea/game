@@ -1,0 +1,80 @@
+ enterance : {
+    Welcome, adventurer! What can I do for you today?
+    Ah, a new customer! Browse at your leisure.
+    Step right up! I’ve got just what you need.
+    Looking for something special? You’ve come to the right place.
+    Well, well, well... what do we have here? A curious soul!
+    Come in, come in! Don’t be shy.
+    Ah, a weary traveler! Care to trade?
+    The shop is open for business! What’s your pleasure?
+    You look like someone who could use my help.
+    Welcome to my humble shop. What catches your eye?
+ },
+ buy : {
+    Excellent choice! That’ll serve you well.
+    A fine purchase! You won’t regret it.
+    Wise decision! That’s one of my best items.
+    Sold! Pleasure doing business with you.
+    A shrewd buyer, I see. Enjoy your new treasure!
+    That’s a rare find! Treat it well.
+    You’ve got a good eye. That’s a steal!
+    A deal well made! Come back anytime.
+    Thank you for your patronage!
+    A wise investment, if I do say so myself.
+ }
+ no_money : {
+    Hmm... your pockets seem a little light.
+    Not enough coins, I’m afraid. Come back when you’re richer!
+    You’ll need a bit more to afford that, my friend.
+    A fine choice, but it seems you’re short on funds.
+    I’d love to sell it to you, but you’re a few coins short.
+    No money, no deal. It’s as simple as that.
+    You’ll have to earn a bit more before you can buy that.
+    I don’t give credit, so come back when you’ve got the cash.
+    That’s a bit out of your price range... for now.
+    Save up a little more, and it’s yours!
+ }
+ random : {
+    Did you know this shop is older than time itself? No? Well, now you do.
+    I once sold a key to a man who escaped the impossible. He never came back.
+    Some say my shop appears only to those who truly need it.
+    Careful with that item—it’s got a bit of a temper.
+    I don’t ask questions, and neither should you.
+    Every item here has a story. Most of them are true.
+    You look like someone who’s seen a few puzzles in their time.
+    I’ve got things here you didn’t even know you needed.
+    The last person who bought that item... well, let’s just say they’re doing fine. Probably.
+    I don’t sell maps to secret exits. Nice try, though.
+    You’re not the first to try haggling with me. You won’t succeed.
+    That item? Oh, it’s cursed. But don’t let that stop you!
+    I’d give you advice, but that’s extra.
+    You break it, you buy it. No exceptions.
+    I’ve been expecting you. Strange, isn’t it?
+    Some say my shop is magical. I say it’s just good business.
+    I don’t sell to just anyone, you know. Consider yourself lucky.
+    You’ve got the look of someone who’s been through a lot.
+    This shop has been in my family for generations. Don’t break anything.
+    I sense you’re close to something big. Care to share?
+ }
+ random2 : {
+    The items here choose their owners. Choose wisely.
+    You’re not just buying an item—you’re buying a piece of the puzzle.
+    The path ahead is uncertain, but my wares are not.
+    Some secrets can’t be bought... but these can.
+    The right choice now could save you later.
+    The future is written in the items you choose.
+    Every purchase is a step closer to your goal.
+    The right tool at the right time can change everything.
+    Some say my shop exists outside of time. Who am I to argue?
+    The items you buy today may shape your destiny.
+    I’ve got things here that even I don’t fully understand.
+    You’re not the first adventurer to visit, and you won’t be the last.
+    I’ve seen people like you before. They either succeed... or disappear.
+    The right item can make the difference between life and death. Choose wisely.
+    I don’t ask where you’re escaping from. It’s better that way.
+    Some items here are more dangerous than they look. Proceed with caution.
+    You’re not just buying an item—you’re buying a chance.
+    The shop knows what you need. Do you?
+    I’ve got things here that even the bravest adventurers fear.
+    Every item has a price. Some are just higher than others.
+ }

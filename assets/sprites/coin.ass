@@ -1,0 +1,16 @@
+sprite "coin" {
+    size: 4x4
+    colors {
+        G: #FFC800
+        S: #FFED4A
+        A: #FFD700
+    }
+    frames {
+        idle {
+            G G G G
+            G S S G
+            G S S G
+            G G G G
+        }
+    }
+}

@@ -14,21 +14,25 @@ class MenuManager {
                 "- Arrow keys or WASD to move",
                 "- ESC to pause",
                 "- M to toggle music",
-                "- N to change music track"
+                "- N to change music track",
+                "- B to show current track"
             ],
             goal: [
-                "Goal:",
-                "- Reach the finish (F)",
-                "- Collect keys to open doors",
-                "- Push blocks onto pressure plates",
-                "- Avoid obstacles (X)"
+                { text: "Goal:", sprite: null },
+                { text: "- Reach the finish", sprite: "finish", frame: "idle" },
+                { text: "- Collect keys to open doors", sprite: "key_yellow", frame: "idle" },
+                { text: "- Yellow keys open normal doors", sprite: "door_normal", frame: "idle" },
+                { text: "- Blue keys open blue doors", sprite: "key_blue", frame: "idle" },
+                { text: "- Push blocks onto plates", sprite: "plate", frame: "idle" },
+                { text: "- Avoid walls", sprite: "wall", frame: "idle" }
             ],
             info: [
                 "Game Info:",
                 "- Each level has different challenges",
                 "- Blue keys open blue doors",
                 "- Yellow keys open regular doors",
-                "- Blocks can be pushed onto plates"
+                "- Blocks can be pushed onto plates",
+                "- Collect coins to buy new skins and upgrades"
             ]
         };
         this.currentInstructionsTab = 'controls';
@@ -367,16 +371,53 @@ class MenuManager {
         });
 
         // Draw content for current tab
-        const content = this.instructionsText[this.currentInstructionsTab];
-        content.forEach((line, index) => {
-            this.engine.drawText(
-                line,
-                this.engine.canvas.width / 2,
-                this.engine.canvas.height * (0.3 + index * 0.1),
-                this.engine.canvas.height * 0.04,
-                'white'
-            );
-        });
+        if (this.currentInstructionsTab === 'goal') {
+            const content = this.instructionsText[this.currentInstructionsTab];
+            const spriteSize = 40;  // Increased sprite size
+            const startY = this.engine.canvas.height * 0.3;
+            const lineHeight = 60;  // Increased line height
+            const centerX = this.engine.canvas.width / 2;
+
+            content.forEach((item, index) => {
+                const y = startY + index * lineHeight;
+                
+                // Draw text centered as before
+                this.engine.ctx.textAlign = 'center';
+                this.engine.drawText(
+                    item.text,
+                    centerX,
+                    y,
+                    this.engine.canvas.height * 0.04,  // Restored original text size
+                    'white'
+                );
+
+                // Draw sprite if one is specified, right after the text
+                if (item.sprite) {
+                    const textWidth = this.engine.ctx.measureText(item.text).width;
+                    const spriteX = centerX + (textWidth / 2) + spriteSize;  // Position sprite after text
+                    this.engine.pixelSprites.drawSprite(
+                        item.sprite,
+                        spriteX,
+                        y - spriteSize/3,  // Adjusted vertical alignment
+                        spriteSize,
+                        spriteSize,
+                        item.frame || 'idle'
+                    );
+                }
+            });
+        } else {
+            // Original text-only drawing for other tabs
+            const content = this.instructionsText[this.currentInstructionsTab];
+            content.forEach((line, index) => {
+                this.engine.drawText(
+                    line,
+                    this.engine.canvas.width / 2,
+                    this.engine.canvas.height * (0.3 + index * 0.1),
+                    this.engine.canvas.height * 0.04,
+                    'white'
+                );
+            });
+        }
 
         // Draw back button
         this.drawButton(

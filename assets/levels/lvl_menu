@@ -4,6 +4,7 @@ menu.start {
         "Start Game",
         "Instructions",
         "Options",
+        "Shop",
         "Exit"
     ]
     car = assets/sprites/car.ass

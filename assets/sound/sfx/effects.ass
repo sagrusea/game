@@ -43,3 +43,37 @@ sfx "mechanism" {
     duration: 0.4
     wave: square
 }
+
+sfx "coin" {
+    type: note
+    frequency: 880
+    duration: 0.1
+    wave: sine
+}
+
+sfx "purchase" {
+    type: note
+    frequency: 440
+    duration: 0.3
+    wave: sine
+}
+
+sfx "upgrade" {
+    sequence {
+        note C5 0.1
+        note E5 0.1
+        note G5 0.2
+    }
+}
+
+sfx "win_melody" {
+    sequence {
+        note C4 0.2
+        note E4 0.2
+        note G4 0.2
+        note C5 0.4
+        note G4 0.2
+        note E4 0.2
+        note C5 0.6
+    }
+}

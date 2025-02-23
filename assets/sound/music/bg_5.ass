@@ -1,0 +1,30 @@
+track "puzzle_ambient" {
+    tempo: 85
+    loop: true
+    
+    sequence {
+        // Atmospheric melody
+        instrument pad
+        note A3 2.0
+        note C4 2.0
+        note E4 2.0
+        note D4 2.0
+        
+        // Soft bell accents
+        instrument bell
+        note A4 0.5
+        note E5 0.5
+        note C5 0.5
+        
+        // Deep bass
+        instrument bass
+        note A2 4.0
+        note E2 4.0
+        
+        // Gentle strings
+        instrument strings
+        note A3 4.0
+        note C4 4.0
+        note E4 4.0
+    }
+}

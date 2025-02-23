@@ -49,5 +49,77 @@ canvas.addEventListener('click', (event) => {
     menuManager.handleClick(x, y);
 });
 
+document.getElementById('toggleTrackDisplay').addEventListener('click', function() {
+    const button = this;
+    if (button.textContent === 'ON') {
+        button.textContent = 'OFF';
+        engine.audio.setShowTrackName(false);
+    } else {
+        button.textContent = 'ON';
+        engine.audio.setShowTrackName(true);
+    }
+});
+
+// Initialize options menu functionality
+document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', () => {
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        // Add active class to clicked tab
+        button.classList.add('active');
+        // Hide all tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+        // Show selected tab content
+        const tabId = button.getAttribute('data-tab');
+        document.getElementById(tabId + 'Tab').style.display = 'block';
+    });
+});
+
+// Close options menu
+document.getElementById('closeOptions').addEventListener('click', () => {
+    document.getElementById('optionsOverlay').style.display = 'none';
+});
+
+// Track display toggle
+document.getElementById('toggleTrackDisplay').addEventListener('click', function() {
+    const isEnabled = this.textContent === 'ON';
+    this.textContent = isEnabled ? 'OFF' : 'ON';
+    engine.audio.setShowTrackName(!isEnabled);
+});
+
+// Auto-switch controls
+document.getElementById('toggleAutoSwitch').addEventListener('click', function() {
+    const isEnabled = this.textContent === 'ON';
+    this.textContent = isEnabled ? 'OFF' : 'ON';
+    engine.audio.setAutoSwitch(!isEnabled);
+});
+
+let currentInterval = 3;
+const intervalValue = document.getElementById('intervalValue');
+
+document.getElementById('intervalUp').addEventListener('click', function() {
+    if (currentInterval < 10) {
+        currentInterval++;
+        intervalValue.textContent = currentInterval + 'min';
+        engine.audio.setSwitchInterval(currentInterval);
+    }
+});
+
+document.getElementById('intervalDown').addEventListener('click', function() {
+    if (currentInterval > 1) {
+        currentInterval--;
+        intervalValue.textContent = currentInterval + 'min';
+        engine.audio.setSwitchInterval(currentInterval);
+    }
+});
+
+// Initialize track display element
+const trackDisplay = document.getElementById('trackDisplay');
+if (!trackDisplay) {
+    console.error('Track display element not found!');
+}
+
 // Start the game when window loads
 window.addEventListener('load', init);

@@ -10,45 +10,149 @@
     <div class="game-container">
         <h1>Escape Game</h1>
         <canvas id="gameCanvas"></canvas>
+        <div id="trackDisplay" class="track-display"></div>
+        <div class="donate-button">❤ Donate</div>
     </div>
     
     <div class="completion-overlay" id="completionOverlay">
         <div class="completion-content">
             <h2>Level Complete!</h2>
-            <div class="completion-stars">★★★</div>
-            <button onclick="levelManager.nextLevel()">Next Level</button>
-            <button onclick="levelManager.restartLevel()">Replay Level</button>
+            <p class="completion-phrase" id="completionPhrase">Great job!</p>
+            <p class="next-level">Next: <span id="nextLevelName">Level 2</span></p>
+            <button class="next-button" id="nextButton">
+                Next Level (<span id="countdown">4</span>)
+            </button>
+        </div>
+    </div>
+
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-content">
+            <h2>Paused</h2>
+            <button class="menu-button" onclick="engine.resumeGame()">Resume</button>
+            <button class="menu-button" onclick="levelManager.restartLevel()">Restart Level</button>
+            <button class="menu-button" onclick="engine.setState('menu')">Exit to Menu</button>
         </div>
     </div>
 
     <div class="options-overlay" id="optionsOverlay">
         <div class="options-content">
             <div class="options-tabs">
-                <button class="tab-button active" data-tab="controls">Controls</button>
+                <button class="tab-button active" data-tab="sound">Sound</button>
+                <button class="tab-button" data-tab="controls">Controls</button>
+                <button class="tab-button" data-tab="graphics">Graphics</button>
                 <button class="tab-button" data-tab="info">Info</button>
             </div>
             
-            <div class="tab-content" id="controlsTab">
-                <h2>Options</h2>
-                <div class="option-item">
-                    <span>Music: </span>
-                    <button class="option-button" id="toggleMusic">ON</button>
+            <div class="tab-content" id="soundTab">
+                <h2>Sound Settings</h2>
+                <div class="options-category">
+                    <h3>Music</h3>
+                    <div class="option-item">
+                        <span>Enable Music: </span>
+                        <button class="option-button" id="toggleMusic">ON</button>
+                    </div>
+                    <div class="option-item">
+                        <span>Music Volume: </span>
+                        <button class="option-button" id="volumeDown">-</button>
+                        <span id="volumeValue">100%</span>
+                        <button class="option-button" id="volumeUp">+</button>
+                    </div>
+                    <div class="option-item">
+                        <span>Auto Switch Songs: </span>
+                        <button class="option-button" id="toggleAutoSwitch">ON</button>
+                    </div>
+                    <div class="option-item">
+                        <span>Switch Interval: </span>
+                        <button class="option-button" id="intervalDown">-</button>
+                        <span id="intervalValue">3min</span>
+                        <button class="option-button" id="intervalUp">+</button>
+                    </div>
+                    <div class="option-item">
+                        <span>Track Display: </span>
+                        <button class="option-button" id="toggleTrackDisplay">ON</button>
+                    </div>
                 </div>
-                <div class="option-item">
-                    <span>Music Volume: </span>
-                    <button class="option-button" id="volumeDown">-</button>
-                    <span id="volumeValue">100%</span>
-                    <button class="option-button" id="volumeUp">+</button>
+
+                <div class="options-category">
+                    <h3>Sound Effects</h3>
+                    <div class="option-item">
+                        <span>Enable SFX: </span>
+                        <button class="option-button" id="toggleSFX">ON</button>
+                    </div>
+                    <div class="option-item">
+                        <span>SFX Volume: </span>
+                        <button class="option-button" id="sfxVolumeDown">-</button>
+                        <span id="sfxVolumeValue">100%</span>
+                        <button class="option-button" id="sfxVolumeUp">+</button>
+                    </div>
                 </div>
-                <div class="option-item">
-                    <span>Sound Effects: </span>
-                    <button class="option-button" id="toggleSFX">ON</button>
+            </div>
+
+            <div class="tab-content" id="controlsTab" style="display: none;">
+                <h2>Control Settings</h2>
+                <div class="options-category">
+                    <h3>Movement</h3>
+                    <div class="control-item">
+                        <span>Move Up:</span>
+                        <span class="key">W</span> or <span class="key">↑</span>
+                    </div>
+                    <div class="control-item">
+                        <span>Move Down:</span>
+                        <span class="key">S</span> or <span class="key">↓</span>
+                    </div>
+                    <div class="control-item">
+                        <span>Move Left:</span>
+                        <span class="key">A</span> or <span class="key">←</span>
+                    </div>
+                    <div class="control-item">
+                        <span>Move Right:</span>
+                        <span class="key">D</span> or <span class="key">→</span>
+                    </div>
                 </div>
-                <div class="option-item">
-                    <span>SFX Volume: </span>
-                    <button class="option-button" id="sfxVolumeDown">-</button>
-                    <span id="sfxVolumeValue">100%</span>
-                    <button class="option-button" id="sfxVolumeUp">+</button>
+                <div class="options-category">
+                    <h3>Actions</h3>
+                    <div class="control-item">
+                        <span>Next Track:</span>
+                        <span class="key">N</span>
+                    </div>
+                    <div class="control-item">
+                        <span>Toggle Mute:</span>
+                        <span class="key">M</span>
+                    </div>
+                    <div class="control-item">
+                        <span>Show Track:</span>
+                        <span class="key">B</span>
+                    </div>
+                </div>
+                <div class="options-category">
+                    <h3>Shop & Coins</h3>
+                    <div class="control-item">
+                        <span>Open Shop:</span>
+                        <span class="key">Tab</span>
+                    </div>
+                    <div class="info-text">
+                        Collect coins in levels to purchase skins and upgrades!
+                        <ul>
+                            <li>Skins change your character's appearance</li>
+                            <li>Upgrades improve your abilities</li>
+                            <li>Progress is automatically saved</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="graphicsTab" style="display: none;">
+                <h2>Graphics Settings</h2>
+                <div class="options-category">
+                    <h3>Display</h3>
+                    <div class="option-item">
+                        <span>Show FPS: </span>
+                        <button class="option-button" id="toggleFPS">OFF</button>
+                    </div>
+                    <div class="option-item">
+                        <span>Pixel Filter: </span>
+                        <button class="option-button" id="togglePixelFilter">ON</button>
+                    </div>
                 </div>
             </div>
 
@@ -60,17 +164,34 @@
                 </div>
             </div>
 
+            <div class="tab-content" id="shopTab" style="display: none;">
+                <h2>Shop</h2>
+                <div class="options-category">
+                    <h3>Character Skins</h3>
+                    <div class="shop-items" id="skinItems">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                <div class="options-category">
+                    <h3>Upgrades</h3>
+                    <div class="shop-items" id="upgradeItems">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+            
             <button class="option-button" id="closeOptions">Back</button>
         </div>
     </div>
 
     <script src="js/audioSynthesizer.js"></script>
     <script src="js/audioManager.js"></script>
-    <script src="js/engine.js"></script>
-    <script src="js/levelManager.js"></script>
-    <script src="js/menuManager.js"></script>
+    <script src="js/shopManager.js"></script>
     <script src="js/spriteManager.js"></script>
     <script src="js/pixelSpriteRenderer.js"></script>
+    <script src="js/levelManager.js"></script>
+    <script src="js/menuManager.js"></script>
+    <script src="js/engine.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,131 @@
+track "adventure_suite" {
+    tempo: 110
+    loop: true
+    
+    sequence {
+        // Section A - Intro
+        instrument strings
+        note A3 2.0
+        note C4 2.0
+        note E4 2.0
+        
+        instrument bell
+        note A4 0.5
+        note C5 0.5
+        note E5 0.5
+        
+        // Bridge to main theme
+        instrument piano
+        note A4 1.0
+        note B4 1.0
+        note C5 1.0
+        note D5 1.0
+        
+        // Section B - Main Theme
+        instrument lead
+        note E5 1.0
+        note G5 0.5
+        note A5 0.5
+        note B5 1.0
+        note A5 0.5
+        note G5 0.5
+        note E5 2.0
+        
+        // Harmony
+        instrument pad
+        note C4 4.0
+        note G4 4.0
+        note A4 4.0
+        
+        // Bass progression
+        instrument bass
+        note C3 2.0
+        note G3 2.0
+        note A3 2.0
+        note E3 2.0
+        
+        // Section C - Development
+        instrument synth
+        note C5 0.25
+        note E5 0.25
+        note G5 0.5
+        note F5 0.25
+        note E5 0.25
+        note D5 0.5
+        
+        instrument pluck
+        note A4 0.25
+        note C5 0.25
+        note E5 0.25
+        note G5 0.25
+        
+        // Rhythmic section
+        drum kick 0.5
+        drum snare 0.5
+        drum hihat 0.25
+        
+        // Section D - Variation
+        instrument strings
+        note G4 2.0
+        note B4 2.0
+        note D5 2.0
+        
+        instrument bell
+        note G5 0.5
+        note B5 0.5
+        note D6 0.5
+        
+        // Interlude
+        instrument piano
+        note E4 1.0
+        note G4 1.0
+        note B4 1.0
+        note C5 1.0
+        
+        // Section E - Build up
+        instrument lead
+        note C5 0.5
+        note E5 0.5
+        note G5 1.0
+        note F5 0.5
+        note E5 0.5
+        note D5 1.0
+        note C5 2.0
+        
+        // Complex harmony
+        instrument pad
+        note C4 4.0
+        note E4 4.0
+        note G4 4.0
+        
+        instrument strings
+        note G3 2.0
+        note C4 2.0
+        note E4 2.0
+        
+        // Final section
+        instrument synth
+        note C6 0.25
+        note G5 0.25
+        note E5 0.25
+        note C5 0.25
+        note G4 1.0
+        
+        instrument pluck
+        note C5 0.25
+        note E5 0.25
+        note G5 0.25
+        note C6 0.25
+        
+        // Outro
+        instrument pad
+        note C4 4.0
+        note G4 4.0
+        note C5 4.0
+        
+        instrument bass
+        note C3 2.0
+        note G3 2.0
+        note C4 2.0
+    }
+}

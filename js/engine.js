@@ -11,6 +11,19 @@ class GameEngine {
         this.audio = new AudioManager();
         this.sprites = new SpriteManager(this);
         this.pixelSprites = new PixelSpriteRenderer(this);
+        this.trackDisplayTimeout = null;
+        this.trackDisplay = document.getElementById('trackDisplay');
+        this.isPaused = false;
+        this.pauseOverlay = document.getElementById('pauseOverlay');
+        this.showFPS = false;
+        this.lastFrameTime = performance.now();
+        this.frameCount = 0;
+        this.currentFPS = 0;
+        this.fpsUpdateInterval = 1000; // Update every second
+        this.lastFPSUpdate = performance.now();
+        this.shopManager = new ShopManager(this);
+        this.isShopOpen = false;
+        
         window.addEventListener('resize', () => this.setFullscreen());
         
         canvas.addEventListener('mousemove', (e) => {
@@ -29,6 +42,17 @@ class GameEngine {
             if (e.key === 'n' || e.key === 'N') {
                 this.audio.nextTrack();
             }
+            if (e.key === 'b' || e.key === 'B') {
+                this.showCurrentTrack();
+            }
+            if ((e.key === 'p' || e.key === 'P' || e.key === 'Escape') && 
+                this.gameState === 'playing') {
+                this.togglePause();
+            }
+            if (e.key === 'Tab') {  // Changed from 'S' to 'Tab'
+                e.preventDefault();   // Prevent Tab from changing focus
+                this.toggleShop();
+            }
         });
         
         window.addEventListener('keyup', (e) => {
@@ -40,6 +64,15 @@ class GameEngine {
             await this.audio.init();
             this.audio.playBackgroundMusic();
         }, { once: true });
+
+        canvas.addEventListener('click', (e) => {
+            if (this.isShopOpen) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                this.shopManager.handleClick(x, y);
+            }
+        });
 
         // Load sprite files
         this.loadSprites();
@@ -53,15 +86,21 @@ class GameEngine {
     }
 
     async loadSprites() {
-        await Promise.all([
-            this.pixelSprites.loadSprite('assets/sprites/player.ass'),
-            this.pixelSprites.loadSprite('assets/sprites/block.ass'),
-            this.pixelSprites.loadSprite('assets/sprites/keys.ass'),
-            this.pixelSprites.loadSprite('assets/sprites/walls.ass'),
-            this.pixelSprites.loadSprite('assets/sprites/doors.ass'),
-            this.pixelSprites.loadSprite('assets/sprites/floor.ass'),
-            this.pixelSprites.loadSprite('assets/sprites/decorations.ass')
-        ]);
+        try {
+            await Promise.all([
+                this.pixelSprites.loadSprite('./assets/sprites/player.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/block.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/keys.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/walls.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/doors.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/floor.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/decorations.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/coin.ass')
+            ]);
+            console.log('Sprites loaded successfully');
+        } catch (error) {
+            console.error('Failed to load sprites:', error);
+        }
     }
 
     setFullscreen() {
@@ -115,26 +154,113 @@ class GameEngine {
         } else {
             console.error('Invalid game state:', newState);
         }
+        if (newState === 'menu' && this.isPaused) {
+            this.togglePause();
+        }
+    }
+
+    showCurrentTrack() {
+        if (!this.audio.showTrackName) return;
+        
+        if (this.trackDisplayTimeout) {
+            clearTimeout(this.trackDisplayTimeout);
+        }
+
+        const trackName = this.audio.getCurrentTrackName();
+        this.trackDisplay.textContent = trackName;
+        this.trackDisplay.classList.add('show');
+
+        this.trackDisplayTimeout = setTimeout(() => {
+            this.trackDisplay.classList.remove('show');
+        }, 3000); // Hide after 3 seconds
+    }
+
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        if (this.isPaused) {
+            this.pauseOverlay.style.display = 'flex';
+            // Optionally pause music or other animations
+            if (this.audio) {
+                this.audio.stopBackgroundMusic();
+            }
+        } else {
+            this.pauseOverlay.style.display = 'none';
+            if (this.audio) {
+                this.audio.playBackgroundMusic();
+            }
+        }
+    }
+
+    resumeGame() {
+        if (this.isPaused) {
+            this.togglePause();
+        }
+    }
+
+    drawPlayer() {
+        const playerX = this.playerPosition.x * 32; // Assuming 32x32 tiles
+        const playerY = this.playerPosition.y * 32;
+        this.pixelSprites.drawSprite('player', playerX, playerY, 32, 32); // Use 'player' as the sprite name
+    }
+
+    toggleFPS() {
+        this.showFPS = !this.showFPS;
+        document.getElementById('toggleFPS').textContent = this.showFPS ? 'ON' : 'OFF';
+    }
+
+    updateFPS(timestamp) {
+        this.frameCount++;
+        
+        const elapsed = timestamp - this.lastFPSUpdate;
+        if (elapsed >= this.fpsUpdateInterval) {
+            this.currentFPS = Math.round((this.frameCount * 1000) / elapsed);
+            this.frameCount = 0;
+            this.lastFPSUpdate = timestamp;
+        }
+    }
+
+    drawFPS() {
+        if (this.showFPS) {
+            this.ctx.save();
+            this.ctx.fillStyle = '#00FF00';
+            this.ctx.font = 'bold 24px Arial';
+            this.ctx.textAlign = 'left';
+            this.ctx.textBaseline = 'top';
+            this.ctx.fillText(`FPS: ${this.currentFPS}`, 10, 10);
+            this.ctx.restore();
+        }
+    }
+
+    toggleShop() {
+        if (this.gameState === 'playing') {
+            this.isShopOpen = !this.isShopOpen;
+            if (this.isShopOpen) {
+                this.shopManager.showMessage('GREETING');
+            }
+        }
     }
 
     gameLoop(timestamp) {
-        this.frameCount++;
         const deltaTime = timestamp - this.lastTime;
         this.lastTime = timestamp;
 
-        // Debug output every 60 frames
-        if (this.frameCount % 60 === 0) {
-            console.log('Game loop frame:', this.frameCount);
-            console.log('Current state:', this.gameState);
-        }
+        this.updateFPS(timestamp);
 
-        // Update and draw based on game state
         if (this.menuManager) {
             this.menuManager.update(deltaTime);
             
-            // Only draw menu if in a menu state
             if (['menu', 'instructions', 'options', 'start'].includes(this.gameState)) {
                 this.menuManager.drawMenu();
+                this.drawFPS(); // Draw FPS on menu screens
+            }
+        }
+
+        if (this.gameState === 'playing') {
+            this.clear();
+            this.levelManager.drawLevel(); // FPS is drawn inside drawLevel
+            this.drawFPS(); // Make sure FPS is drawn last
+            if (this.isShopOpen) {
+                this.shopManager.drawShop();
             }
         }
 

@@ -1,49 +1,7 @@
 class LevelManager {
     constructor(engine) {
         this.engine = engine;
-        this.levels = {
-            level1: [
-                ['c', '.', '.', 'x', '.', '.', '.', 'k', '.', '.', 'L', '.', '.', 'f'],
-                ['.', 'x', '.', '.', '.', 'x', '.', 'x', '.', 'x', '.', '.', 'x', '.'],
-                ['.', '.', '.', 'x', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
-                ['x', '.', '.', '.', '.', 'x', '.', 'x', '.', 'x', '.', '.', 'x', '.'],
-                ['.', 'x', '.', 'x', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
-            ],
-            level2: [
-                ['c', '.', '.', '.', 'B', '.', '.', '.', '.', 'x', '.', '.', '.', '.'],
-                ['.', 'x', 'x', '.', 'x', '.', 'x', 'x', '.', '.', '.', 'x', 'x', '.'],
-                ['.', '.', '.', '.', '.', '.', '.', '.', '.', 'x', '.', '.', '.', '.'],
-                ['x', 'x', '.', 'x', '.', 'x', '.', 'x', '.', '.', '.', 'x', '.', '.'],
-                ['.', '.', '.', '.', '.', '.', '.', '.', '.', 'x', '.', '.', '.', '.'],
-                ['.', 'x', 'x', '.', 'x', '.', 'x', '.', '.', '.', '.', 'x', 'x', '.'],
-                ['K', '.', '.', '.', '.', '.', '.', '.', '.', 'x', '.', '.', '.', 'f']
-            ],
-            level3: [
-                ['c', '.', '.', '.', 'b', '.', '.', 'p', '.', '.', '.', '.', 'D', 'f'],
-                ['.', 'x', 'x', '.', '.', '.', 'x', 'x', 'x', '.', 'x', 'x', 'x', '.'],
-                ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
-                ['x', '.', 'x', '.', 'x', '.', 'x', '.', 'x', '.', 'x', '.', 'x', '.'],
-                ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
-                ['.', 'x', '.', 'x', '.', 'x', '.', 'x', '.', 'x', '.', 'x', '.', '.'],
-                ['k', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'L']
-            ],
-            level4: [
-                ['c', '.', '.', '.', 'K', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
-                ['.', 'x', 'x', 'x', 'x', 'x', '.', 'x', 'x', 'x', 'x', 'x', '.', '.'],
-                ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'],
-                ['x', 'x', '.', 'x', '.', 'x', 'B', 'x', '.', 'x', '.', 'x', 'x', '.'],
-                ['.', '.', '.', '.', 'b', '.', '.', '.', 'p', '.', '.', '.', '.', '.'],
-                ['.', 'x', 'x', '.', 'x', '.', 'x', '.', 'x', '.', 'x', 'x', '.', '.'],
-                ['.', '.', '.', '.', '.', '.', 'D', '.', '.', '.', '.', '.', '.', 'f']
-            ],
-            level5: [
-                ["c", "x", ".", ".", ".", "x", "x", "x", "x", "x", "x", "x", ".", "."],
-                [".", "x", "K", "x", ".", ".", ".", ".", ".", ".", ".", "x", ".", "."],
-                [".", "x", ".", "x", ".", ".", ".", ".", ".", ".", ".", "x", ".", "."],
-                [".", "x", ".", "x", ".", ".", ".", ".", ".", ".", ".", "x", "x", "x"],
-                [".", ".", ".", "x", ".", ".", ".", ".", ".", ".", ".", "B", ".", "f"]
-            ]
-        };
+        this.levels = {};
         this.currentLevel = null;
         this.moveDelay = 0;
         this.moveSpeed = 150; // Milliseconds between moves
@@ -56,15 +14,79 @@ class LevelManager {
         this.movableBlocks = new Map(); // Store positions of movable blocks
         this.currentLevelName = null;
         this.completionOverlay = document.getElementById('completionOverlay');
+        this.levelCompleted = false;  // Add this line
+        this.loadLevels();
+    }
+
+    async loadLevels() {
+        try {
+            const response = await fetch('./assets/levels/levels.json');
+            this.levels = await response.json();
+            console.log('Levels loaded successfully');
+        } catch (error) {
+            console.error('Failed to load levels:', error);
+        }
     }
 
     showCompletion() {
+        this.levelCompleted = true;  // Set completion flag
+        const levelNames = Object.keys(this.levels);
+        const currentIndex = levelNames.indexOf(this.currentLevelName);
+        const nextLevelName = currentIndex < levelNames.length - 1 
+            ? `Level ${currentIndex + 2}`
+            : 'Final Level Complete!';
+        
+        document.getElementById('nextLevelName').textContent = nextLevelName;
+        
+        // Clear any existing timeout and click handlers
+        if (this.completionTimeout) {
+            clearInterval(this.completionTimeout);
+        }
+        
+        // Remove old click handler if exists
+        const nextButton = document.getElementById('nextButton');
+        nextButton.onclick = null;
+
+        // Add new click handler
+        nextButton.onclick = () => {
+            clearInterval(this.completionTimeout);
+            this.hideCompletion();
+            if (currentIndex < levelNames.length - 1) {
+                const nextLevel = levelNames[currentIndex + 1];
+                console.log('Loading next level:', nextLevel);
+                this.loadLevel(nextLevel);
+            } else {
+                console.log('Game completed');
+                this.engine.setState('menu');
+            }
+        };
+
+        // Show overlay and start countdown
         this.completionOverlay.classList.add('show-completion');
-        this.engine.audio.synthesizer.playSoundEffect('victory');
+        this.engine.audio.synthesizer.playSoundEffect('win_melody');
+        
+        let timeLeft = 4;
+        const countdownElement = document.getElementById('countdown');
+        countdownElement.textContent = timeLeft;
+        
+        this.completionTimeout = setInterval(() => {
+            timeLeft--;
+            countdownElement.textContent = timeLeft;
+            
+            if (timeLeft <= 0) {
+                clearInterval(this.completionTimeout);
+                nextButton.onclick(); // Simulate button click when timer ends
+            }
+        }, 1000);
     }
 
     hideCompletion() {
+        if (this.completionTimeout) {
+            clearInterval(this.completionTimeout);
+            this.completionTimeout = null;
+        }
         this.completionOverlay.classList.remove('show-completion');
+        this.levelCompleted = false;  // Reset completion flag
     }
 
     nextLevel() {
@@ -111,7 +133,7 @@ class LevelManager {
     }
 
     updatePlayer() {
-        if (!this.currentLevel) return;
+        if (!this.currentLevel || this.levelCompleted) return;  // Add completion check
         
         const now = Date.now();
         if (now - this.moveDelay < this.moveSpeed) return;
@@ -333,12 +355,10 @@ class LevelManager {
             this.engine.pixelSprites.drawSprite('block', blockX, blockY, tileSize, tileSize);
         }
 
-        // Draw player
-        if (this.engine.playerPosition) {
+        // Only draw player if level is not completed
+        if (this.engine.playerPosition && !this.levelCompleted) {
             const playerX = offsetX + this.engine.playerPosition.x * tileSize;
             const playerY = offsetY + this.engine.playerPosition.y * tileSize;
-            
-            // Use 'move' frame if player is moving, otherwise 'idle'
             const frame = this.isMoving ? 'move' : 'idle';
             this.engine.pixelSprites.drawSprite('player', playerX, playerY, tileSize, tileSize, frame);
         }

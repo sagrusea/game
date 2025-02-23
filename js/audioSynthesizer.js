@@ -10,21 +10,104 @@ class AudioSynthesizer {
         this.soundEffects = new Map();
         this.volume = 1.0;
         this.instruments = {
-            piano: { type: 'sine', attack: 0.02, decay: 0.1, sustain: 0.7, release: 0.1 },
-            bass: { type: 'triangle', attack: 0.05, decay: 0.2, sustain: 0.8, release: 0.2 },
-            lead: { type: 'square', attack: 0.01, decay: 0.1, sustain: 0.6, release: 0.1 },
-            pad: { type: 'sine', attack: 0.3, decay: 0.3, sustain: 0.8, release: 0.5 },
-            pluck: { type: 'sawtooth', attack: 0.01, decay: 0.1, sustain: 0.3, release: 0.1 }
+            piano: { 
+                type: 'sine',
+                attack: 0.02,
+                decay: 0.1,
+                sustain: 0.7,
+                release: 0.1,
+                filterType: 'lowpass',
+                filterFreq: 2000,
+                detune: 0
+            },
+            bass: { 
+                type: 'triangle',
+                attack: 0.05,
+                decay: 0.2,
+                sustain: 0.8,
+                release: 0.2,
+                filterType: 'lowpass',
+                filterFreq: 500,
+                detune: 0
+            },
+            lead: { 
+                type: 'sawtooth',
+                attack: 0.01,
+                decay: 0.1,
+                sustain: 0.6,
+                release: 0.1,
+                filterType: 'highpass',
+                filterFreq: 1000,
+                detune: 5
+            },
+            pad: { 
+                type: 'sine',
+                attack: 0.3,
+                decay: 0.3,
+                sustain: 0.8,
+                release: 0.5,
+                filterType: 'lowpass',
+                filterFreq: 800,
+                detune: 10,
+                chorus: true
+            },
+            pluck: { type: 'sawtooth', attack: 0.01, decay: 0.1, sustain: 0.3, release: 0.1 },
+            bell: { type: 'sine', attack: 0.01, decay: 0.5, sustain: 0.0, release: 0.1 },
+            flute: { type: 'sine', attack: 0.1, decay: 0.1, sustain: 0.8, release: 0.2 },
+            strings: { 
+                type: 'sawtooth',
+                attack: 0.2,
+                decay: 0.2,
+                sustain: 0.9,
+                release: 0.3,
+                filterType: 'lowpass',
+                filterFreq: 1200,
+                detune: 12,
+                harmonics: [
+                    { interval: 0, volume: 1.0 },    // Root note
+                    { interval: 7, volume: 0.5 },    // Fifth
+                    { interval: 12, volume: 0.3 }    // Octave
+                ]
+            },
+            synth: { type: 'square', attack: 0.02, decay: 0.3, sustain: 0.6, release: 0.2 },
+            organ: { 
+                type: 'square',
+                attack: 0.05,
+                decay: 0.0,
+                sustain: 1.0,
+                release: 0.1,
+                filterType: 'bandpass',
+                filterFreq: 2000,
+                detune: 3,
+                harmonics: [
+                    { interval: 0, volume: 1.0 },    // Root note
+                    { interval: 12, volume: 0.7 },   // Octave
+                    { interval: 19, volume: 0.4 },   // Twelfth
+                    { interval: 24, volume: 0.2 }    // Double octave
+                ]
+            }
         };
     }
 
-    init() {
+    async init() {
         if (!this.audioContext) {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Ensure context is resumed on first user interaction
+            if (this.audioContext.state === 'suspended') {
+                await new Promise(resolve => {
+                    const resumeOnInteraction = async () => {
+                        await this.audioContext.resume();
+                        document.removeEventListener('click', resumeOnInteraction);
+                        document.removeEventListener('keydown', resumeOnInteraction);
+                        resolve();
+                    };
+                    document.addEventListener('click', resumeOnInteraction);
+                    document.addEventListener('keydown', resumeOnInteraction);
+                });
+            }
         }
-        if (this.audioContext.state === 'suspended') {
-            this.audioContext.resume();
-        }
+        return this.audioContext;
     }
 
     async loadTrack(filepath) {
@@ -63,49 +146,70 @@ class AudioSynthesizer {
     }
 
     parseTrackData(data) {
-        if (!data) {
-            throw new Error('No data to parse');
-        }
-
         const track = {
+            name: '',
             tempo: 120,
             sequence: []
         };
 
         try {
-            const lines = data.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('//'));
-            
+            // Remove comments and empty lines
+            const lines = data.split('\n')
+                .map(line => line.trim())
+                .filter(line => line && !line.startsWith('//'));
+
+            let inSequence = false;
+            let currentInstrument = 'piano';
+
             lines.forEach(line => {
-                if (line.includes('tempo:')) {
-                    const match = line.match(/tempo:\s*(\d+)/);
-                    if (match) {
-                        track.tempo = parseInt(match[1]);
+                // Track name
+                if (line.includes('track')) {
+                    const nameMatch = line.match(/track\s*"([^"]+)"/);
+                    if (nameMatch) {
+                        track.name = nameMatch[1];
                     }
-                } else if (line.match(/note\s+\w+\s+[\d.]+/)) {
-                    const [_, note, duration] = line.match(/note\s+(\w+)\s+([\d.]+)/);
-                    if (this.noteToFreq[note]) { // Only add note if frequency exists
-                        track.sequence.push({ 
-                            type: 'note', 
-                            note, 
-                            duration: parseFloat(duration)
-                        });
+                }
+                // Tempo
+                else if (line.includes('tempo:')) {
+                    const tempoMatch = line.match(/tempo:\s*(\d+)/);
+                    if (tempoMatch) {
+                        track.tempo = parseInt(tempoMatch[1]);
                     }
-                } else if (line.match(/bass\s+\w+\s+[\d.]+/)) {
-                    const [_, note, duration] = line.match(/bass\s+(\w+)\s+([\d.]+)/);
-                    if (this.noteToFreq[note]) { // Only add note if frequency exists
-                        track.sequence.push({ 
-                            type: 'bass', 
-                            note, 
+                }
+                // Start of sequence
+                else if (line.includes('sequence {')) {
+                    inSequence = true;
+                }
+                // End of sequence
+                else if (line === '}') {
+                    inSequence = false;
+                }
+                // Instrument selection
+                else if (line.startsWith('instrument')) {
+                    const instMatch = line.match(/instrument\s+(\w+)/);
+                    if (instMatch) {
+                        currentInstrument = instMatch[1];
+                    }
+                }
+                // Note definition
+                else if (inSequence && (line.startsWith('note') || line.startsWith('bass'))) {
+                    const [type, note, duration] = line.split(/\s+/);
+                    if (this.noteToFreq[note]) {
+                        track.sequence.push({
+                            type: type === 'bass' ? 'bass' : 'note',
+                            instrument: currentInstrument,
+                            note: note,
                             duration: parseFloat(duration)
                         });
                     }
                 }
             });
 
+            console.log('Parsed track:', track); // Debug output
             return track;
         } catch (error) {
             console.error('Error parsing track data:', error);
-            return track; // Return default track structure
+            return track;
         }
     }
 
@@ -135,37 +239,111 @@ class AudioSynthesizer {
         if (!this.audioContext) return;
         
         const frequency = this.noteToFreq[note];
-        if (!frequency) return;
+        if (!frequency || !isFinite(frequency)) {
+            console.error('Invalid frequency for note:', note);
+            return;
+        }
+        
+        if (!isFinite(duration) || duration <= 0) {
+            console.error('Invalid duration:', duration);
+            return;
+        }
 
         const instSettings = this.instruments[instrument] || this.instruments.piano;
-        const oscillator = this.audioContext.createOscillator();
+        const now = this.audioContext.currentTime;
+
+        // Create master gain node
+        const masterGain = this.audioContext.createGain();
+        masterGain.connect(this.audioContext.destination);
+
+        // Handle harmonics if defined
+        const oscillators = [];
+        if (instSettings.harmonics) {
+            instSettings.harmonics.forEach(harmonic => {
+                const oscillatorPair = this.createOscillatorPair(
+                    frequency * Math.pow(2, harmonic.interval / 12),
+                    instSettings,
+                    masterGain,
+                    harmonic.volume
+                );
+                oscillators.push(...oscillatorPair);
+            });
+        } else {
+            // Default behavior with two oscillators
+            const mainOscillators = this.createOscillatorPair(frequency, instSettings, masterGain, 1.0);
+            oscillators.push(...mainOscillators);
+        }
+
+        // ADSR envelope with safe values
+        const safeVolume = Math.min(Math.max(0, this.volume), 1);
+        const safeSustain = Math.min(Math.max(0, instSettings.sustain || 0.7), 1);
+        const attack = Math.max(0.001, instSettings.attack || 0.02);
+        const decay = Math.max(0.001, instSettings.decay || 0.1);
+        const release = Math.max(0.001, instSettings.release || 0.1);
+        
+        masterGain.gain.setValueAtTime(0, now);
+        masterGain.gain.linearRampToValueAtTime(safeVolume, now + attack);
+        masterGain.gain.linearRampToValueAtTime(safeSustain * safeVolume, now + attack + decay);
+        masterGain.gain.setValueAtTime(safeSustain * safeVolume, now + duration - release);
+        masterGain.gain.linearRampToValueAtTime(0, now + duration);
+
+        // Add chorus effect if specified
+        if (instSettings.chorus) {
+            this.addChorusEffect(oscillators, now, duration);
+        }
+
+        // Start and stop all oscillators
+        oscillators.forEach(osc => {
+            osc.start(now);
+            osc.stop(now + duration);
+        });
+    }
+
+    createOscillatorPair(frequency, instSettings, outputNode, volumeMult = 1.0) {
+        const oscillator1 = this.audioContext.createOscillator();
+        const oscillator2 = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
         
-        // Add filter for tone shaping
+        // Create filter
         const filter = this.audioContext.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = instrument === 'bass' ? 500 : 2000;
+        filter.type = instSettings.filterType || 'lowpass';
+        filter.frequency.value = Math.min(Math.max(0, instSettings.filterFreq || 2000), 20000);
 
         // Connect nodes
-        oscillator.connect(filter);
+        oscillator1.connect(filter);
+        oscillator2.connect(filter);
         filter.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
+        gainNode.connect(outputNode);
         
-        oscillator.type = instSettings.type;
-        oscillator.frequency.value = frequency;
-
-        const now = this.audioContext.currentTime;
-        const { attack, decay, sustain, release } = instSettings;
+        // Set oscillator properties
+        oscillator1.type = instSettings.type || 'sine';
+        oscillator2.type = instSettings.type || 'sine';
+        oscillator1.frequency.value = frequency;
+        oscillator2.frequency.value = frequency;
         
-        // ADSR envelope
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(this.volume, now + attack);
-        gainNode.gain.linearRampToValueAtTime(sustain * this.volume, now + attack + decay);
-        gainNode.gain.setValueAtTime(sustain * this.volume, now + duration - release);
-        gainNode.gain.linearRampToValueAtTime(0, now + duration);
+        // Apply detune
+        const detune = isFinite(instSettings.detune) ? instSettings.detune : 0;
+        oscillator2.detune.value = Math.min(Math.max(-100, detune), 100);
 
-        oscillator.start(now);
-        oscillator.stop(now + duration);
+        // Set harmonic volume
+        gainNode.gain.value = volumeMult;
+
+        return [oscillator1, oscillator2];
+    }
+
+    addChorusEffect(oscillators, now, duration) {
+        const chorus = this.audioContext.createOscillator();
+        const chorusGain = this.audioContext.createGain();
+        chorus.frequency.value = 3;
+        chorusGain.gain.value = 0.002;
+        chorus.connect(chorusGain);
+        
+        oscillators.forEach(osc => {
+            chorusGain.connect(osc.frequency);
+        });
+        
+        chorus.start(now);
+        chorus.stop(now + duration);
     }
 
     playSoundEffect(name) {

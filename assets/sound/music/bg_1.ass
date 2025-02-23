@@ -42,3 +42,27 @@ track "background" {
         drum hihat 0.25
     }
 }
+
+track "ambient" {
+    tempo: 80
+    loop: true
+
+    sequence {
+        // Melody
+        instrument piano
+        note C4 1.0
+        note E4 1.0
+        note G4 1.0
+        note E4 1.0
+
+        // Bass
+        instrument bass
+        note C3 2.0
+        note G3 2.0
+
+        // Soft texture
+        instrument pad
+        note C4 4.0
+        note G4 4.0
+    }
+}

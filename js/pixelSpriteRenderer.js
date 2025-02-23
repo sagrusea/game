@@ -5,13 +5,26 @@ class PixelSpriteRenderer {
         this.pixelSize = 1;
     }
 
-    async loadSprite(filepath) {
+    async loadSprite(path) {
         try {
-            const response = await fetch(filepath);
+            const response = await fetch(path);
+            if (!response.ok) {
+                throw new Error(`Failed to load sprite: ${path}`);
+            }
             const data = await response.text();
             this.parseSprite(data);
+            console.log(`Loaded sprite: ${path}`);
         } catch (error) {
-            console.error('Failed to load sprite:', error);
+            console.error('Error loading sprite:', error);
+            // Create a fallback colored rectangle sprite
+            this.sprites.set(path, {
+                width: 16,
+                height: 16,
+                frames: new Map([
+                    ['idle', { color: '#FF00FF', duration: 1000 }],
+                    ['move', { color: '#FF00FF', duration: 500 }]
+                ])
+            });
         }
     }
 
@@ -45,16 +58,31 @@ class PixelSpriteRenderer {
                 if (pixelData.length === 8) { // Assuming 8x8 sprites
                     currentSprite.frames.set(currentFrame, pixelData);
                 }
+            } else if (line.includes('}')) {
+                if (currentFrame && pixelData.length > 0) {
+                    currentSprite.frames.set(currentFrame, pixelData);
+                    console.log(`Parsed frame: ${currentFrame} for sprite: ${currentSprite.name}`);
+                }
+                currentFrame = null;
+                pixelData = [];
             }
         });
+
+        console.log(`Parsed sprite: ${currentSprite.name}`, currentSprite);
     }
 
     drawSprite(name, x, y, width, height, frame = 'idle') {
         const sprite = this.sprites.get(name);
-        if (!sprite) return;
+        if (!sprite) {
+            console.error('Sprite not found:', name);
+            return;
+        }
 
         const pixelData = sprite.frames.get(frame);
-        if (!pixelData) return;
+        if (!pixelData) {
+            console.error('Frame not found:', frame, 'in sprite:', name);
+            return;
+        }
 
         // Round position and size to prevent sub-pixel rendering
         x = Math.round(x);

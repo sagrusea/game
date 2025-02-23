@@ -1,0 +1,21 @@
+// Shop greetings
+GREETING_1: Welcome, adventurer! Looking for something special?
+GREETING_2: Ah, a customer! What can I get for you today?
+GREETING_3: Welcome to my humble shop. Everything is for sale!
+GREETING_4: Got lots of coins? You've come to the right place!
+
+// Not enough coins
+NO_COINS_1: Come back when you have more coins, friend.
+NO_COINS_2: Sorry, but these items aren't free!
+NO_COINS_3: You'll need more coins for that one.
+
+// Purchase success
+SUCCESS_1: Excellent choice! Use it wisely.
+SUCCESS_2: A fine purchase indeed!
+SUCCESS_3: Thank you for your business!
+
+// Shop items descriptions
+ITEM_SKIN_1: A sleek new look for our hero
+ITEM_SKIN_2: Shiny golden appearance
+ITEM_SPEED_1: Move faster through the maze
+ITEM_KEY_1: A spare key might come in handy
