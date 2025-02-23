@@ -24,7 +24,8 @@ class MenuManager {
                 { text: "- Yellow keys open normal doors", sprite: "door_normal", frame: "idle" },
                 { text: "- Blue keys open blue doors", sprite: "key_blue", frame: "idle" },
                 { text: "- Push blocks onto plates", sprite: "plate", frame: "idle" },
-                { text: "- Avoid walls", sprite: "wall", frame: "idle" }
+                { text: "- Avoid walls", sprite: "wall", frame: "idle" },
+                { text: "- Avoid spikes", sprite: "spikes", frame: "idle" }
             ],
             info: [
                 "Game Info:",

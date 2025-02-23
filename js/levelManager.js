@@ -15,6 +15,7 @@ class LevelManager {
         this.currentLevelName = null;
         this.completionOverlay = document.getElementById('completionOverlay');
         this.levelCompleted = false;  // Add this line
+        this.spikes = new Map(); // Store spike states: { pos: string, extended: boolean, nextChange: number }
         this.loadLevels();
     }
 
@@ -30,6 +31,14 @@ class LevelManager {
 
     showCompletion() {
         this.levelCompleted = true;  // Set completion flag
+        
+        // Reset keys immediately on level completion
+        this.engine.inventory = {
+            yellowKeys: 0,
+            blueKeys: 0,
+            redKeys: 0
+        };
+        
         const levelNames = Object.keys(this.levels);
         const currentIndex = levelNames.indexOf(this.currentLevelName);
         const nextLevelName = currentIndex < levelNames.length - 1 
@@ -91,12 +100,20 @@ class LevelManager {
 
     nextLevel() {
         this.hideCompletion();
+        
+        // Make sure keys are reset when moving to next level
+        this.engine.inventory = {
+            yellowKeys: 0,
+            blueKeys: 0,
+            redKeys: 0
+        };
+        
         const levelNames = Object.keys(this.levels);
         const currentIndex = levelNames.indexOf(this.currentLevelName);
         if (currentIndex < levelNames.length - 1) {
             this.loadLevel(levelNames[currentIndex + 1]);
         } else {
-            this.engine.gameState = 'start';
+            this.engine.setState('menu');
         }
     }
 
@@ -111,6 +128,7 @@ class LevelManager {
             this.currentLevel = this.levels[levelName];
             this.inventory = { keys: 0, hasBlueKey: false, hasRedKey: false };
             this.movableBlocks.clear();
+            this.spikes.clear();
             
             // Find starting position (first 'c' in the level)
             for (let y = 0; y < this.currentLevel.length; y++) {
@@ -122,6 +140,12 @@ class LevelManager {
                     }
                     if (this.currentLevel[y][x] === 'b') {
                         this.movableBlocks.set(`${x},${y}`, { x, y });
+                    }
+                    if (this.currentLevel[y][x] === 'j') {
+                        this.spikes.set(`${x},${y}`, {
+                            extended: false,
+                            nextChange: Date.now() + Math.random() * 1500 + 1000
+                        });
                     }
                 }
             }
@@ -175,6 +199,13 @@ class LevelManager {
                 // Check pressure plates after movement
                 this.checkPressurePlates();
                 
+                // Check if player moved onto extended spikes
+                const spikeState = this.spikes.get(`${newPos.x},${newPos.y}`);
+                if (spikeState && spikeState.extended) {
+                    this.restartLevel();
+                    return;
+                }
+                
                 if (this.currentLevel[newPos.y][newPos.x] === 'f') {
                     this.showCompletion();
                 }
@@ -182,6 +213,9 @@ class LevelManager {
                 this.engine.audio.synthesizer.playSoundEffect('collision');
             }
         }
+        
+        // Add spike update call
+        this.updateSpikes();
     }
 
     isValidMove(pos) {
@@ -190,10 +224,10 @@ class LevelManager {
         const tile = this.currentLevel[pos.y][pos.x];
         
         // Check for walls and locked doors
-        if (tile === 'x') return false;
-        if (tile === 'L' && !this.inventory.keys) return false;
-        if (tile === 'B' && !this.inventory.hasBlueKey) return false;
-        if (tile === 'R' && !this.inventory.hasRedKey) return false;
+        if (tile === 'x' || tile === 'D') return false;  // Added 'D' to block movement
+        if (tile === 'L' && !this.engine.hasKey('yellow')) return false;
+        if (tile === 'B' && !this.engine.hasKey('blue')) return false;
+        if (tile === 'R' && !this.engine.hasKey('red')) return false;
 
         // Check for movable blocks
         const blockKey = `${pos.x},${pos.y}`;
@@ -229,33 +263,25 @@ class LevelManager {
         
         switch(tile) {
             case 'k':
-                this.inventory.keys++;
+                this.engine.addKey('yellow');
                 this.currentLevel[pos.y][pos.x] = '.';
-                this.engine.audio.synthesizer.playSoundEffect('collect');
                 break;
             case 'K':
-                this.inventory.hasBlueKey = true;
+                this.engine.addKey('blue');
                 this.currentLevel[pos.y][pos.x] = '.';
-                this.engine.audio.synthesizer.playSoundEffect('collect');
                 break;
             case 'Y':
-                this.inventory.hasRedKey = true;
+                this.engine.addKey('red');
                 this.currentLevel[pos.y][pos.x] = '.';
-                this.engine.audio.synthesizer.playSoundEffect('collect');
                 break;
             case 'L':
-                if (this.inventory.keys > 0) {
-                    this.inventory.keys--;
-                    this.currentLevel[pos.y][pos.x] = '.';
-                    this.engine.audio.synthesizer.playSoundEffect('unlock');
-                }
-                break;
             case 'B':
             case 'R':
-                if ((tile === 'B' && this.inventory.hasBlueKey) ||
-                    (tile === 'R' && this.inventory.hasRedKey)) {
+                const keyColor = tile === 'L' ? 'yellow' : (tile === 'B' ? 'blue' : 'red');
+                if (this.engine.hasKey(keyColor)) {
+                    this.engine.useKey(keyColor);
                     this.currentLevel[pos.y][pos.x] = '.';
-                    this.engine.audio.synthesizer.playSoundEffect('unlock');
+                    this.engine.audio.playSoundEffect('unlock');
                 }
                 break;
         }
@@ -285,6 +311,24 @@ class LevelManager {
                 }
             }
         }
+    }
+
+    updateSpikes() {
+        const now = Date.now();
+        this.spikes.forEach((spike, pos) => {
+            if (now >= spike.nextChange) {
+                spike.extended = !spike.extended;
+                spike.nextChange = now + Math.random() * 1500 + 1000; // Random between 1000-2500ms
+                
+                // If player is on spikes when they extend, restart level
+                const [x, y] = pos.split(',').map(Number);
+                if (spike.extended && 
+                    this.engine.playerPosition.x === x && 
+                    this.engine.playerPosition.y === y) {
+                    this.restartLevel();
+                }
+            }
+        });
     }
 
     drawLevel() {
@@ -327,11 +371,17 @@ class LevelManager {
                     case 'K':
                         this.engine.pixelSprites.drawSprite('key_blue', tileX, tileY, tileSize, tileSize);
                         break;
+                    case 'Y':
+                        this.engine.pixelSprites.drawSprite('key_red', tileX, tileY, tileSize, tileSize);
+                        break;
                     case 'L':
                         this.engine.pixelSprites.drawSprite('door_normal', tileX, tileY, tileSize, tileSize);
                         break;
                     case 'B':
                         this.engine.pixelSprites.drawSprite('door_blue', tileX, tileY, tileSize, tileSize);
+                        break;
+                    case 'R':
+                        this.engine.pixelSprites.drawSprite('door_red', tileX, tileY, tileSize, tileSize);
                         break;
                     case 'p':
                         this.engine.pixelSprites.drawSprite('plate', tileX, tileY, tileSize, tileSize, 
@@ -341,8 +391,13 @@ class LevelManager {
                         this.engine.pixelSprites.drawSprite('door_mechanism', tileX, tileY, tileSize, tileSize);
                         break;
                     case 'f':
-                        const frame = Math.floor(Date.now() / 500) % 2 === 0 ? 'idle' : 'glow';
-                        this.engine.pixelSprites.drawSprite('finish', tileX, tileY, tileSize, tileSize, frame);
+                        const finishFrame = Math.floor(Date.now() / 500) % 2 === 0 ? 'idle' : 'glow';
+                        this.engine.pixelSprites.drawSprite('finish', tileX, tileY, tileSize, tileSize, finishFrame);
+                        break;
+                    case 'j':
+                        const spikeState = this.spikes.get(`${x},${y}`);
+                        const spikeFrame = spikeState && spikeState.extended ? 'extended' : 'idle';
+                        this.engine.pixelSprites.drawSprite('spikes', tileX, tileY, tileSize, tileSize, spikeFrame);
                         break;
                 }
             }
@@ -373,24 +428,34 @@ class LevelManager {
     }
 
     drawInventory() {
-        const padding = 20;
-        const iconSize = 40;
+        const ctx = this.engine.ctx;
+        const padding = 10;
+        const iconSize = 32;
+        const spacing = 10;
+        const textOffset = 40;
+
+        ctx.font = '20px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        let yPos = padding;
         
-        // Draw keys count with yellow key sprite
-        if (this.inventory.keys > 0) {
-            this.engine.pixelSprites.drawSprite('key_yellow', padding, padding, iconSize, iconSize);
-            this.engine.drawText(`x${this.inventory.keys}`, 
-                               padding + iconSize + 10, 
-                               padding + iconSize/2, 
-                               20, 'white');
+        if (this.engine.inventory.yellowKeys > 0) {
+            this.engine.pixelSprites.drawSprite('key_yellow', padding, yPos, iconSize, iconSize);
+            ctx.fillText(`x${this.engine.inventory.yellowKeys}`, padding + textOffset, yPos + iconSize/2);
+            yPos += iconSize + spacing;
         }
         
-        // Draw special keys
-        if (this.inventory.hasBlueKey) {
-            this.engine.pixelSprites.drawSprite('key_blue', 
-                                              padding, 
-                                              padding + iconSize + 10, 
-                                              iconSize, iconSize);
+        if (this.engine.inventory.blueKeys > 0) {
+            this.engine.pixelSprites.drawSprite('key_blue', padding, yPos, iconSize, iconSize);
+            ctx.fillText(`x${this.engine.inventory.blueKeys}`, padding + textOffset, yPos + iconSize/2);
+            yPos += iconSize + spacing;
+        }
+        
+        if (this.engine.inventory.redKeys > 0) {
+            this.engine.pixelSprites.drawSprite('key_red', padding, yPos, iconSize, iconSize);
+            ctx.fillText(`x${this.engine.inventory.redKeys}`, padding + textOffset, yPos + iconSize/2);
         }
     }
 }

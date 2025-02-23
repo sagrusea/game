@@ -7,6 +7,11 @@ class GameEngine {
         this.playerPosition = { x: 0, y: 0 };
         this.mousePos = { x: 0, y: 0 };
         this.keys = {};
+        this.inventory = {
+            yellowKeys: 0,
+            blueKeys: 0,
+            redKeys: 0
+        };
         this.setFullscreen();
         this.audio = new AudioManager();
         this.sprites = new SpriteManager(this);
@@ -95,7 +100,8 @@ class GameEngine {
                 this.pixelSprites.loadSprite('./assets/sprites/doors.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/floor.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/decorations.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/coin.ass')
+                this.pixelSprites.loadSprite('./assets/sprites/coin.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/hazards.ass')
             ]);
             console.log('Sprites loaded successfully');
         } catch (error) {
@@ -144,6 +150,15 @@ class GameEngine {
             const oldState = this.gameState;
             console.log(`State changing from ${oldState} to ${newState} at frame ${this.frameCount}`);
             this.gameState = newState;
+            
+            // Reset inventory when starting a new game
+            if (newState === 'playing') {
+                this.inventory = {
+                    yellowKeys: 0,
+                    blueKeys: 0,
+                    redKeys: 0
+                };
+            }
             
             // Force a redraw when state changes
             if (this.menuManager) {
@@ -237,6 +252,56 @@ class GameEngine {
             if (this.isShopOpen) {
                 this.shopManager.showMessage('GREETING');
             }
+        }
+    }
+
+    addKey(color) {
+        console.log(`Adding ${color} key`); // Debug log
+        switch(color.toLowerCase()) {
+            case 'yellow':
+                this.inventory.yellowKeys++;
+                break;
+            case 'blue':
+                this.inventory.blueKeys++;
+                break;
+            case 'red':
+                this.inventory.redKeys++;
+                break;
+        }
+        this.audio.playSoundEffect('collect');
+    }
+
+    useKey(color) {
+        console.log(`Using ${color} key`); // Debug log
+        switch(color.toLowerCase()) {
+            case 'yellow':
+                if (this.inventory.yellowKeys > 0) {
+                    this.inventory.yellowKeys--;
+                    return true;
+                }
+                break;
+            case 'blue':
+                if (this.inventory.blueKeys > 0) {
+                    this.inventory.blueKeys--;
+                    return true;
+                }
+                break;
+            case 'red':
+                if (this.inventory.redKeys > 0) {
+                    this.inventory.redKeys--;
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
+    hasKey(color) {
+        switch(color.toLowerCase()) {
+            case 'yellow': return this.inventory.yellowKeys > 0;
+            case 'blue': return this.inventory.blueKeys > 0;
+            case 'red': return this.inventory.redKeys > 0;
+            default: return false;
         }
     }
 

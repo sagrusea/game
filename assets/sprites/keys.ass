@@ -38,3 +38,23 @@ sprite "key_blue" {
         }
     }
 }
+
+sprite "key_red" {
+    size: 8x8
+    colors {
+        R: #FF0000
+        D: #990000
+    }
+    frames {
+        idle {
+            . . . R R . . .
+            . . R D D R . .
+            . . R D D R . .
+            . . . R R . . .
+            . . . R R . . .
+            . . R R R . . .
+            . R R . R R . .
+            R R . . . R R .
+        }
+    }
+}

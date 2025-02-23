@@ -60,3 +60,24 @@ sprite "door_mechanism" {
         }
     }
 }
+
+sprite "door_red" {
+    size: 8x8
+    colors {
+        R: #660000
+        D: #440000
+        L: #AA0000
+    }
+    frames {
+        idle {
+            R R R R R R R R
+            R D L L L L D R
+            R L D D D D L R
+            R L D R R D L R
+            R L D R R D L R
+            R L D D D D L R
+            R D L L L L D R
+            R R R R R R R R
+        }
+    }
+}
