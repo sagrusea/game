@@ -1,0 +1,32 @@
+sprite "shopkeeper" {
+    size: 9x9
+    colors: {
+        A: #200404
+        W: #EEEEEE
+        B: #000000
+    }
+    frames {
+        idle {
+            A A A A A A A A A
+            A A W A A W A A A
+            A A B A A B A A A
+            A A A A A A A A A
+            A A A A A A A A A
+            A B W B B B W B A
+            A A B B B B B A A
+            A A A A A A A A A
+            A A A A A A A A A
+        }
+        talk {
+            A A A A A A A A A
+            A A W A A W A A A
+            A A B A A B A A A
+            A A A A A A A A A
+            A A A A A A A A A
+            A B W B B B W B A
+            A A B B B B B A A
+            A A B B B B B A A
+            A A A A A A A A A
+        }
+    }
+}

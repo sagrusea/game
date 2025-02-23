@@ -439,20 +439,20 @@ class MenuManager {
         this.engine.drawText(
             "Select Level",
             this.engine.canvas.width / 2,
-            this.engine.canvas.height * 0.15,
+            this.engine.canvas.height * 0.1, // Moved up to 10% from top
             this.engine.canvas.height * 0.08,
             'white'
         );
         this.engine.ctx.shadowBlur = 0;
 
-        // Draw level grid (3x3)
+        // Draw level grid (3x3) - Moved down to create space from title
         const startLevel = this.currentLevelPage * this.levelsPerPage;
         const gridSize = 3;
         const padding = 20;
         const cardWidth = 180;
         const cardHeight = 200;
         const startX = this.engine.canvas.width / 2 - (cardWidth + padding) * (gridSize / 2 - 0.5);
-        const startY = this.engine.canvas.height * 0.25;
+        const startY = this.engine.canvas.height * 0.2; // Moved down to 20% from top
 
         for(let row = 0; row < gridSize; row++) {
             for(let col = 0; col < gridSize; col++) {
@@ -626,6 +626,10 @@ class MenuManager {
     async handleOption(option) {
         console.log('Handling option:', option);
         switch(option) {
+            case 'Shop':
+                this.engine.setState('playing');
+                this.engine.toggleShop();
+                break;
             case 'Options':
                 document.getElementById('optionsOverlay').style.display = 'flex';
                 break;

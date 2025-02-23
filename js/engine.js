@@ -104,7 +104,8 @@ class GameEngine {
                 this.pixelSprites.loadSprite('./assets/sprites/floor.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/decorations.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/coin.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/hazards.ass')
+                this.pixelSprites.loadSprite('./assets/sprites/hazards.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/shopkeeper.ass')
             ]);
             console.log('Sprites loaded successfully');
         } catch (error) {
@@ -249,10 +250,23 @@ class GameEngine {
     }
 
     toggleShop() {
-        if (this.gameState === 'playing') {
-            this.isShopOpen = !this.isShopOpen;
-            if (this.isShopOpen) {
-                this.shopManager.showMessage('GREETING');
+        if (!this.levelManager) {
+            // Create a minimal level manager for shop-only mode
+            this.levelManager = new LevelManager(this);
+            this.levelManager.inventory = { coins: 100 }; // Give some starting coins for testing
+        }
+        
+        this.isShopOpen = !this.isShopOpen;
+        if (this.isShopOpen) {
+            this.shopManager.showMessage('entrance');
+            // Ensure shop items are loaded
+            if (!this.shopManager.categories || this.shopManager.categories.length === 0) {
+                this.shopManager.loadShopItems();
+            }
+        } else {
+            // When closing shop, return to menu if we weren't in a level
+            if (!this.levelManager.currentLevel) {
+                this.setState('menu');
             }
         }
     }

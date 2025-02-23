@@ -1,0 +1,67 @@
+{
+    "categories": [
+        {
+            "name": "Character Skins",
+            "items": [
+                {
+                    "id": "skin_1",
+                    "name": "Golden Hero",
+                    "price": 100,
+                    "type": "skin",
+                    "sprite": "player_gold",
+                    "description": "A shiny golden hero skin"
+                },
+                {
+                    "id": "skin_2",
+                    "name": "Shadow Knight",
+                    "price": 150,
+                    "type": "skin",
+                    "sprite": "player_shadow",
+                    "description": "Dark and mysterious appearance"
+                }
+            ]
+        },
+        {
+            "name": "Upgrades",
+            "items": [
+                {
+                    "id": "speed_1",
+                    "name": "Speed Boost",
+                    "price": 75,
+                    "type": "upgrade",
+                    "description": "Move 25% faster",
+                    "effect": "moveSpeed"
+                },
+                {
+                    "id": "health_1",
+                    "name": "Extra Heart",
+                    "price": 200,
+                    "type": "upgrade",
+                    "description": "Increases max health by 1",
+                    "effect": "maxHealth"
+                }
+            ]
+        },
+        {
+            "name": "Consumables",
+            "items": [
+                {
+                    "id": "key_1",
+                    "name": "Spare Key",
+                    "price": 30,
+                    "type": "consumable",
+                    "description": "A regular yellow key",
+                    "effect": "yellowKey"
+                },
+                {
+                    "id": "key_2",
+                    "name": "Blue Key",
+                    "price": 50,
+                    "type": "consumable",
+                    "description": "A special blue key",
+                    "effect": "blueKey"
+                }
+            ]
+        }
+    ]
+}
