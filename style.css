@@ -81,6 +81,21 @@ canvas {
     transform: scale(1.1);
 }
 
+.completion-content .menu-button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #666;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.completion-content .menu-button:hover {
+    background-color: #888;
+}
+
 .show-completion {
     display: flex;
     opacity: 1;
@@ -246,4 +261,23 @@ canvas {
     position: absolute;
     left: 0;
     color: #b66dff;
+}
+
+.stats-content {
+    padding: 20px;
+    color: white;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(138, 43, 226, 0.2);
+    border-radius: 5px;
+}
+
+.stat-item span:first-child {
+    font-weight: bold;
+    margin-right: 20px;
 }

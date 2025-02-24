@@ -1,6 +1,8 @@
 class MenuManager {
     constructor(engine) {
         this.engine = engine;
+        this.ctx = engine.ctx;  // Get context from engine
+        this.canvas = engine.canvas;  // Get canvas from engine
         this.levelManager = null; // Will be set from script.js
         this.menuConfig = {
             title: "Escape Game",
@@ -280,7 +282,36 @@ class MenuManager {
                 break;
         }
 
+        // Draw coin counter on top of everything
+        this.drawCoinCounter();
+
         this.lastDrawnState = this.engine.gameState;
+    }
+
+    drawCoinCounter() {
+        const padding = 10;
+        const iconSize = 32;
+        const spacing = 10;
+
+        // Save context state
+        this.engine.ctx.save();
+        
+        // Draw coin sprite
+        this.engine.pixelSprites.drawSprite('coin', padding, padding, iconSize, iconSize, 'idle');
+        
+        // Draw coin amount
+        this.engine.ctx.textAlign = 'left';
+        this.engine.ctx.textBaseline = 'middle';
+        this.engine.ctx.fillStyle = '#FFD700';
+        this.engine.ctx.font = 'bold 24px Arial';
+        this.engine.ctx.fillText(
+            `${this.engine.getCoins()}`,
+            padding + iconSize + spacing,
+            padding + (iconSize / 2)
+        );
+
+        // Restore context state
+        this.engine.ctx.restore();
     }
 
     drawMainMenu() {

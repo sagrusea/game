@@ -23,6 +23,88 @@ class LevelManager {
         this.failureDelay = 2000; // Time to show failure screen
         this.phrases = [];
         this.loadPhrases();
+        this.collectibles = []; // Add this line
+        this.customFloors = new Map(); // Store positions of custom floor types
+        this.tileRules = {
+            'wall': {
+                base: true,
+                combinable: []
+            },
+            'floor': {
+                base: true,
+                combinable: [
+                    'bronze_coin', 'silver_coin', 'gold_coin', 'plate',
+                    'door_normal', 'door_blue', 'door_red', 'finish',
+                    'key_yellow', 'key_blue', 'key_red' // Add keys to combinable items
+                ]
+            },
+            'bronze_coin': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'silver_coin': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'gold_coin': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'plate': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'door_normal': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'door_blue': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'door_red': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'finish': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'key_yellow': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'key_blue': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'key_red': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'door_mechanism': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            }
+        };
+        this.floorTypes = {
+            'I': 'plank_floor',
+            'S': 'stone_floor',
+            '.': 'floor'  // Default floor type
+            // Add more floor type mappings here
+        };
     }
 
     async loadLevels() {
@@ -56,13 +138,19 @@ class LevelManager {
     }
 
     showCompletion() {
-        this.levelCompleted = true;  // Set completion flag
+        if (!this.engine.inventory) return;
         
-        // Reset keys immediately on level completion
+        this.levelCompleted = true;
+        
+        // Calculate coins before resetting keys
+        const totalValue = this.calculateCoinsValue();
+        
+        // Reset keys
         this.engine.inventory = {
+            ...this.engine.inventory,
             yellowKeys: 0,
             blueKeys: 0,
-            redKeys: 0
+            redKeys: 0,
         };
         
         const levelNames = Object.keys(this.levels);
@@ -96,6 +184,14 @@ class LevelManager {
             }
         };
 
+        // Add menu button handler
+        const menuButton = document.getElementById('menuButton');
+        menuButton.onclick = () => {
+            clearInterval(this.completionTimeout);
+            this.hideCompletion();
+            this.engine.setState('menu');
+        };
+
         // Show overlay and start countdown
         this.completionOverlay.classList.add('show-completion');
         this.engine.audio.synthesizer.playSoundEffect('win_melody');
@@ -116,6 +212,35 @@ class LevelManager {
 
         // Update completion phrase
         document.getElementById('completionPhrase').textContent = this.getRandomPhrase();
+
+        // Add coins to global count with animation
+        const coinsCollected = this.engine.getLevelCoins();
+        
+        document.getElementById('nextLevelName').textContent = nextLevelName;
+        document.getElementById('coinsCollected').textContent = `Coins collected: ${coinsCollected}`;
+        
+        // Show overlay and add coins with animation
+        this.completionOverlay.classList.add('show-completion');
+        this.engine.audio.synthesizer.playSoundEffect('win_melody');
+        this.engine.addCoinsToGlobal(coinsCollected, true);
+
+        // Update coins display before showing overlay
+        const levelCoins = this.engine.inventory.levelCoins;
+        document.getElementById('coinsCollected').textContent = 
+            `Coins collected: ${levelCoins} (Value: ${this.calculateCoinsValue()})`;
+        
+        // Update coins display
+        document.getElementById('coinsCollected').textContent = 
+            `Coins collected: ${this.engine.inventory.levelCoins} (Value: ${totalValue})`;
+        
+        // Add coins to global count
+        if (totalValue > 0) {
+            this.engine.addCoinsToGlobal(totalValue, true);
+        }
+
+        // Update coins display to show value
+        document.getElementById('coinsCollected').textContent = 
+            `Coins value collected: ${totalValue}`;
     }
 
     hideCompletion() {
@@ -151,6 +276,15 @@ class LevelManager {
         this.loadLevel(this.currentLevelName);
     }
 
+    parseFloorNotation(tile) {
+        if (tile.includes('|')) {
+            const [object, floorCode] = tile.split('|');
+            const floorType = this.floorTypes[floorCode] || 'floor';
+            return { object: object || '.', floor: floorType };
+        }
+        return { object: tile, floor: 'floor' };
+    }
+
     loadLevel(levelName) {
         console.log('Loading level:', levelName); // Debug log
         if (this.levels[levelName]) {
@@ -158,33 +292,95 @@ class LevelManager {
             this.inventory = { keys: 0, hasBlueKey: false, hasRedKey: false };
             this.movableBlocks.clear();
             this.spikes.clear();
+            this.collectibles = []; // Add this line
+            this.customFloors.clear();
             // Reset health on new level
             this.engine.currentHealth = this.engine.maxHealth;
             
             // Find starting position (first 'c' in the level)
             for (let y = 0; y < this.currentLevel.length; y++) {
                 for (let x = 0; x < this.currentLevel[y].length; x++) {
-                    if (this.currentLevel[y][x] === 'c') {
+                    const tile = this.currentLevel[y][x];
+                    const { object, floor } = this.parseFloorNotation(tile);
+                    
+                    // Store custom floor if specified
+                    if (floor !== 'floor') {
+                        this.customFloors.set(`${x},${y}`, floor);
+                    }
+
+                    // Update the level array to only contain the object
+                    this.currentLevel[y][x] = object;
+
+                    // Process the object as before
+                    if (object === 'c') {
                         this.engine.playerPosition = { x, y };
-                        // Replace 'c' with '.' after finding player start
                         this.currentLevel[y][x] = '.';
-                    }
-                    if (this.currentLevel[y][x] === 'b') {
+                    } else if (object === 'b') {
                         this.movableBlocks.set(`${x},${y}`, { x, y });
-                    }
-                    if (this.currentLevel[y][x] === 'j') {
+                    } else if (object === 'j') {
                         this.spikes.set(`${x},${y}`, {
                             extended: false,
                             nextChange: Date.now() + Math.random() * 1500 + 1000
                         });
                     }
+                    switch (object) {
+                        case 'C': // bronze coin
+                            this.placeCollectible('bronze_coin', x, y);
+                            this.currentLevel[y][x] = '.'; // Replace with empty space after placing
+                            break;
+                        case 'V': // silver coin
+                            this.placeCollectible('silver_coin', x, y);
+                            this.currentLevel[y][x] = '.'; // Replace with empty space after placing
+                            break;
+                        case 'N': // gold coin
+                            this.placeCollectible('gold_coin', x, y);
+                            this.currentLevel[y][x] = '.'; // Replace with empty space after placing
+                            break;
+                    }
                 }
             }
             this.currentLevelName = levelName;
             console.log('Level loaded successfully');
+            this.engine.resetLevelCoins();
         } else {
             console.error('Level not found:', levelName);
         }
+    }
+
+    placeCollectible(type, x, y) {
+        const collectible = {
+            type: type,
+            x: x,
+            y: y,
+            value: type === 'bronze_coin' ? 1 : 
+                   type === 'silver_coin' ? 5 : 
+                   type === 'gold_coin' ? 10 : 1
+        };
+        this.collectibles.push(collectible);
+    }
+
+    checkCollectibles(playerX, playerY) {
+        this.collectibles = this.collectibles.filter(item => {
+            if (item.x === playerX && item.y === playerY) {
+                // Play coin sound
+                this.engine.audio.playSoundEffect('coin');
+                
+                // Add to level coins count
+                this.engine.inventory.levelCoins++;
+                
+                // Add to global coins based on coin type value
+                if (item.type === 'bronze_coin') {
+                    this.engine.inventory.coins += 1;
+                } else if (item.type === 'silver_coin') {
+                    this.engine.inventory.coins += 5;
+                } else if (item.type === 'gold_coin') {
+                    this.engine.inventory.coins += 10;
+                }
+                
+                return false;
+            }
+            return true;
+        });
     }
 
     updatePlayer() {
@@ -241,6 +437,9 @@ class LevelManager {
                 if (this.currentLevel[newPos.y][newPos.x] === 'f') {
                     this.showCompletion();
                 }
+
+                // Check for collectible items
+                this.checkCollectibles(newPos.x, newPos.y);
             } else {
                 this.engine.audio.synthesizer.playSoundEffect('collision');
             }
@@ -256,7 +455,7 @@ class LevelManager {
         const tile = this.currentLevel[pos.y][pos.x];
         
         // Check for walls and locked doors
-        if (tile === 'x' || tile === 'D' || tile === 'P') return false;  // Added 'D' to block movement
+        if (tile === 'x' || tile === 'D' || tile === 'P' || tile === 'S') return false;  // Added 'D' to block movement
         if (tile === 'L' && !this.engine.hasKey('yellow')) return false;
         if (tile === 'B' && !this.engine.hasKey('blue')) return false;
         if (tile === 'R' && !this.engine.hasKey('red')) return false;
@@ -383,9 +582,104 @@ class LevelManager {
         }
     }
 
+    drawTile(tileX, tileY, offsetX, offsetY, tileSize) {
+        let layers = [];
+        const pos = `${tileX},${tileY}`;
+        
+        // Check for custom floor
+        const customFloor = this.customFloors.get(pos);
+        layers.push(customFloor || 'floor');
+
+        // Rest of layer handling
+        const tile = this.currentLevel[tileY][tileX];
+
+        // Handle walls (they replace floor)
+        if (tile === 'x') {
+            layers = ['wall'];
+        } else if (tile === 'P') {
+            layers = ['plank_wall'];
+        } else if (tile === 'S') {
+            layers = ['stone_wall'];
+        } else {
+            // Add overlays for other tiles
+            switch(tile) {
+                case 'L':
+                    layers.push('door_normal');
+                    break;
+                case 'B':
+                    layers.push('door_blue');
+                    break;
+                case 'R':
+                    layers.push('door_red');
+                    break;
+                case 'D':
+                    layers.push('door_mechanism');
+                    break;
+                case 'f':
+                    layers.push('finish');
+                    break;
+                case 'p':
+                    layers.push('plate');
+                    break;
+                case 'k':
+                    layers.push('key_yellow');
+                    break;
+                case 'K':
+                    layers.push('key_blue');
+                    break;
+                case 'Y':
+                    layers.push('key_red');
+                    break;
+            }
+
+            // Add collectibles
+            const collectible = this.collectibles.find(c => c.x === tileX && c.y === tileY);
+            if (collectible) {
+                layers.push(collectible.type);
+            }
+        }
+
+        // Draw all layers
+        layers.forEach(sprite => {
+            this.engine.pixelSprites.drawSprite(
+                sprite,
+                offsetX + tileX * tileSize,
+                offsetY + tileY * tileSize,
+                tileSize,
+                tileSize,
+                this.getTileFrame(sprite, tileX, tileY)
+            );
+        });
+    }
+
+    // Helper method to check if two tile types can be combined
+    canCombine(baseType, overlayType) {
+        const baseRule = this.tileRules[baseType];
+        const overlayRule = this.tileRules[overlayType];
+
+        if (!baseRule || !overlayRule) return false;
+        if (!baseRule.base) return false;
+        if (overlayRule.requiresBase && !overlayRule.requiresBase.includes(baseType)) return false;
+
+        return baseRule.combinable.includes(overlayType);
+    }
+
+    // Helper method to get the correct frame for a tile
+    getTileFrame(sprite, x, y) {
+        switch(sprite) {
+            case 'plate':
+                return this.isPlatePressed(x, y) ? 'pressed' : 'idle';
+            case 'finish':
+                return Math.floor(Date.now() / 500) % 2 === 0 ? 'idle' : 'glow';
+            // Add other special cases...
+            default:
+                return 'idle';
+        }
+    }
+
     drawLevel() {
-        if (!this.currentLevel) {
-            console.error('No level loaded');
+        if (!this.currentLevel || !this.engine.inventory) {
+            console.error('No level loaded or inventory not initialized');
             return;
         }
         
@@ -408,59 +702,7 @@ class LevelManager {
             for (let x = 0; x < this.currentLevel[y].length; x++) {
                 const tileX = offsetX + x * tileSize;
                 const tileY = offsetY + y * tileSize;
-
-                // Draw floor sprite for all tiles
-                this.engine.pixelSprites.drawSprite('floor', tileX, tileY, tileSize, tileSize);
-
-                // Draw tile content using pixel sprites
-                switch(this.currentLevel[y][x]) {
-                    case 'x':
-                        this.engine.pixelSprites.drawSprite('wall', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'P':
-                        this.engine.pixelSprites.drawSprite('plank_wall', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 's':
-                        this.engine.pixelSprites.drawSprite('stone', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'k':
-                        this.engine.pixelSprites.drawSprite('key_yellow', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'K':
-                        this.engine.pixelSprites.drawSprite('key_blue', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'Y':
-                        this.engine.pixelSprites.drawSprite('key_red', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'L':
-                        this.engine.pixelSprites.drawSprite('door_normal', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'B':
-                        this.engine.pixelSprites.drawSprite('door_blue', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'R':
-                        this.engine.pixelSprites.drawSprite('door_red', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'p':
-                        this.engine.pixelSprites.drawSprite('plate', tileX, tileY, tileSize, tileSize, 
-                            this.isPlatePressed(x, y) ? 'pressed' : 'idle');
-                        break;
-                    case 'D':
-                        this.engine.pixelSprites.drawSprite('door_mechanism', tileX, tileY, tileSize, tileSize);
-                        break;
-                    case 'f':
-                        const finishFrame = Math.floor(Date.now() / 500) % 2 === 0 ? 'idle' : 'glow';
-                        this.engine.pixelSprites.drawSprite('finish', tileX, tileY, tileSize, tileSize, finishFrame);
-                        break;
-                    case 'j':
-                        const spikeState = this.spikes.get(`${x},${y}`);
-                        const spikeFrame = spikeState && spikeState.extended ? 'extended' : 'idle';
-                        this.engine.pixelSprites.drawSprite('spikes', tileX, tileY, tileSize, tileSize, spikeFrame);
-                        break;
-                    case 'I':
-                        this.engine.pixelSprites.drawSprite('plank_floor', tileX, tileY, tileSize, tileSize);
-                        break;
-                }
+                this.drawTile(x, y, offsetX, offsetY, tileSize);
             }
         }
 
@@ -470,6 +712,19 @@ class LevelManager {
             const blockY = offsetY + block.y * tileSize;
             this.engine.pixelSprites.drawSprite('block', blockX, blockY, tileSize, tileSize);
         }
+
+        // Draw collectibles with correct offsets
+        this.collectibles.forEach(item => {
+            const itemX = offsetX + item.x * tileSize;
+            const itemY = offsetY + item.y * tileSize;
+            this.engine.pixelSprites.drawSprite(
+                item.type,
+                itemX,
+                itemY,
+                tileSize,
+                tileSize
+            );
+        });
 
         // Only draw player if level is not completed
         if (this.engine.playerPosition && !this.levelCompleted) {
@@ -516,6 +771,31 @@ class LevelManager {
             
             ctx.restore();
         }
+
+        // Draw coin counter
+        const padding = 10;
+        const iconSize = 32;
+        const spacing = 10;
+
+        this.engine.ctx.save();
+        // Draw level coins
+        this.engine.pixelSprites.drawSprite('coin', 
+            padding, 
+            this.engine.canvas.height - padding - iconSize, 
+            iconSize, 
+            iconSize, 
+            'idle');
+        
+        this.engine.ctx.textAlign = 'left';
+        this.engine.ctx.textBaseline = 'middle';
+        this.engine.ctx.fillStyle = '#FFD700';
+        this.engine.ctx.font = 'bold 24px Arial';
+        this.engine.ctx.fillText(
+            `${this.calculateCurrentLevelValue()}`, // Changed from getLevelCoins
+            padding + iconSize + spacing,
+            this.engine.canvas.height - padding - iconSize/2
+        );
+        this.engine.ctx.restore();
     }
 
     isPlatePressed(x, y) {
@@ -572,5 +852,26 @@ class LevelManager {
             this.engine.currentHealth = this.engine.maxHealth;
             this.restartLevel();
         }, this.failureDelay);
+    }
+
+    calculateCoinsValue() {
+        let totalValue = 0;
+        this.collectibles.forEach(coin => {
+            if (coin.type === 'bronze_coin') totalValue += 1;
+            else if (coin.type === 'silver_coin') totalValue += 5;
+            else if (coin.type === 'gold_coin') totalValue += 10;
+        });
+        return totalValue;
+    }
+
+    calculateCurrentLevelValue() {
+        let totalValue = 0;
+        const uncollectedCoins = this.collectibles;
+        uncollectedCoins.forEach(coin => {
+            if (coin.type === 'bronze_coin') totalValue += 1;
+            else if (coin.type === 'silver_coin') totalValue += 5;
+            else if (coin.type === 'gold_coin') totalValue += 10;
+        });
+        return totalValue;
     }
 }

@@ -1,5 +1,6 @@
 const canvas = document.getElementById('gameCanvas');
 const engine = new GameEngine(canvas);
+engine.loadSavedCoins(); // Add this line after engine initialization
 const levelManager = new LevelManager(engine);
 const menuManager = new MenuManager(engine);
 

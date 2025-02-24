@@ -33,38 +33,46 @@ class Game {
             this.maxCameraY = (this.currentLevel.length * this.tileSize) - this.renderer.canvas.height;
         }
 
-        // Check if level exceeds threshold
-        const isLargeLevel = 
-            this.currentLevel[0].length > GameConfig.levelSizeThreshold.width ||
-            this.currentLevel.length > GameConfig.levelSizeThreshold.height;
-
+        // Set zoom based on level size
+        const isLargeLevel = this.currentLevel[0].length > 15 || this.currentLevel.length > 15;
         if (isLargeLevel) {
-            this.targetZoom = GameConfig.zoom.follow;
-            this.renderer.setZoom(this.targetZoom);
+            this.renderer.setZoom(2); // Zoom IN for large levels (focused on player)
+            this.currentZoom = 2;
+            this.targetZoom = 2;
         } else {
-            this.targetZoom = GameConfig.zoom.normal;
-            this.renderer.setZoom(this.targetZoom);
+            this.renderer.setZoom(1);
+            this.currentZoom = 1;
+            this.targetZoom = 1;
         }
+
+        // Calculate level dimensions with zoom
+        this.levelWidth = this.currentLevel[0].length * this.tileSize;
+        this.levelHeight = this.currentLevel.length * this.tileSize;
     }
 
     update() {
-        // Update camera position to follow player
-        this.cameraX = this.player.x - (this.renderer.canvas.width / 2);
-        this.cameraY = this.player.y - (this.renderer.canvas.height / 2);
-        
-        // Clamp camera to level bounds
-        this.cameraX = Math.max(0, Math.min(this.cameraX, this.levelWidth - this.renderer.canvas.width));
-        this.cameraY = Math.max(0, Math.min(this.cameraY, this.levelHeight - this.renderer.canvas.height));
-        
-        // Smoother camera movement for large levels
-        const isLargeLevel = this.currentLevel[0].length > 20;
-        if (isLargeLevel) {
-            this.cameraX += (this.targetCameraX - this.cameraX) * 0.1;
-            this.cameraY += (this.targetCameraY - this.cameraY) * 0.1;
-        }
-
-        // Update camera position with zoom factor
+        // Calculate view dimensions with zoom
         const viewWidth = this.renderer.canvas.width / this.currentZoom;
         const viewHeight = this.renderer.canvas.height / this.currentZoom;
 
-        this.targetCameraX = this.player.x - (viewWidth / 2);
+        // Center camera on player
+        this.targetCameraX = (this.player.x * this.tileSize) - (viewWidth / 2);
+        this.targetCameraY = (this.player.y * this.tileSize) - (viewHeight / 2);
+
+        // Smooth camera movement
+        this.cameraX += (this.targetCameraX - this.cameraX) * 0.1;
+        this.cameraY += (this.targetCameraY - this.cameraY) * 0.1;
+
+        // Clamp camera to level bounds
+        const maxX = (this.levelWidth) - viewWidth;
+        const maxY = (this.levelHeight) - viewHeight;
+        this.cameraX = Math.max(0, Math.min(this.cameraX, maxX));
+        this.cameraY = Math.max(0, Math.min(this.cameraY, maxY));
+    }
+
+    render() {
+        // Replace old rendering code with new optimized version
+        this.renderer.render(this.currentLevel, this.entities, this.cameraX, this.cameraY);
+        requestAnimationFrame(() => this.render());
+    }
+}

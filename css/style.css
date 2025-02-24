@@ -2,3 +2,20 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+.coins-collected {
+    font-size: 24px;
+    color: #FFD700;
+    margin: 10px 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+@keyframes coinPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.coin-added {
+    animation: coinPulse 0.3s ease-in-out;
+}

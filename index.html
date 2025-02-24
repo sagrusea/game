@@ -19,9 +19,11 @@
             <h2>Level Complete!</h2>
             <p class="completion-phrase" id="completionPhrase">Great job!</p>
             <p class="next-level">Next: <span id="nextLevelName">Level 2</span></p>
+            <div id="coinsCollected" class="coins-collected"></div>
             <button class="next-button" id="nextButton">
                 Next Level (<span id="countdown">4</span>)
             </button>
+            <button class="menu-button" id="menuButton">Return to Menu</button>
         </div>
     </div>
 
@@ -41,6 +43,7 @@
                 <button class="tab-button" data-tab="controls">Controls</button>
                 <button class="tab-button" data-tab="graphics">Graphics</button>
                 <button class="tab-button" data-tab="info">Info</button>
+                <button class="tab-button" data-tab="stats">Statistics</button>
             </div>
             
             <div class="tab-content" id="soundTab">
@@ -179,18 +182,40 @@
                     </div>
                 </div>
             </div>
+
+            <div class="tab-content" id="statsTab" style="display: none;">
+                <h2>Statistics</h2>
+                <div class="stats-content">
+                    <div class="stat-item">
+                        <span>Total Coins Collected:</span>
+                        <span id="totalCoinsCollected">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Levels Completed:</span>
+                        <span id="levelsCompleted">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Total Deaths:</span>
+                        <span id="totalDeaths">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Play Time:</span>
+                        <span id="playTime">0:00:00</span>
+                    </div>
+                </div>
+            </div>
             
             <button class="option-button" id="closeOptions">Back</button>
         </div>
     </div>
 
-    <!-- Update script order to load AudioSynthesizer before AudioManager -->
+    <!-- Update script order -->
     <script src="js/audioSynthesizer.js"></script>
     <script src="js/audioManager.js"></script>
-    <script src="js/shopManager.js"></script>
     <script src="js/spriteManager.js"></script>
     <script src="js/pixelSpriteRenderer.js"></script>
-    <script src="js/levelManager.js"></script>
+    <script src="js/levelManager.js"></script>  <!-- Move this before engine.js -->
+    <script src="js/shopManager.js"></script>
     <script src="js/menuManager.js"></script>
     <script src="js/engine.js"></script>
     <script src="script.js"></script>

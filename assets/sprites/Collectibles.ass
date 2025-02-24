@@ -1,0 +1,91 @@
+
+sprite "bronze_coin" {
+    size: 8x8
+    colors {
+        A: #996214
+        B: #CA821A
+    }
+    frames {
+        idle {
+            . . . . . . . .
+            . . A A A A . .
+            . A A B B A A .
+            . A B B B B A .
+            . A B B B B A .
+            . A A B B A A .
+            . . A A A A . .
+            . . . . . . . .
+        }
+    }
+}
+sprite "silver_coin" {
+    size: 8x8
+    colors {
+        A: #454545
+        B: #858585
+    }
+    frames {
+        idle {
+            . . . . . . . .
+            . . A A A A . .
+            . A A B B A A .
+            . A B B B B A .
+            . A B B B B A .
+            . A A B B A A .
+            . . A A A A . .
+            . . . . . . . .
+        }
+    }
+}
+sprite "gold_coin" {
+    size: 8x8
+    colors {
+        A: #857106
+        B: #FFD700
+    }
+    frames {
+        idle {
+            . . . . . . . .
+            . . A A A A . .
+            . A A B B A A .
+            . A B B B B A .
+            . A B B B B A .
+            . A A B B A A .
+            . . A A A A . .
+            . . . . . . . .
+        }
+    }
+}
+sprite "diamond" {
+    size: 8x8
+    colors {
+        A: #0C215F
+        B: #091844
+        C: #0D1D52
+        D: #091438
+        E: #0A1C50
+        F: #050E29
+    }
+    frames {
+        idle {
+            . . . . . . . .
+            . . . D E . . .
+            . . B C D A . .
+            . . B C D A . .
+            . . B C D A . .
+            . . B C D A . .
+            . . . F A . . .
+            . . . . . . . .
+        }
+        anim1 {
+            . . . . . . . .
+            . . . E B . . .
+            . . A B C D . .
+            . . A B C D . .
+            . . A B C D . .
+            . . A B C D . .
+            . . . A F . . .
+            . . . . . . . .
+        }
+    }
+}

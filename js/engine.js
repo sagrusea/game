@@ -10,7 +10,9 @@ class GameEngine {
         this.inventory = {
             yellowKeys: 0,
             blueKeys: 0,
-            redKeys: 0
+            redKeys: 0,
+            coins: 0,  // Global coins
+            levelCoins: 0  // Coins collected in current level
         };
         this.setFullscreen();
         this.audio = new AudioManager();
@@ -31,6 +33,14 @@ class GameEngine {
         this.maxHealth = 3;
         this.currentHealth = 3;
         this.levelManager = null; // Add this line
+        this.tileSize = 32;
+        this.cameraX = 0;
+        this.cameraY = 0;
+        this.zoom = 1;
+        
+        // Initialize LevelManager
+        this.levelManager = new LevelManager(this);
+        this.levelManager.collectibles = []; // Move it here after initialization
         
         window.addEventListener('resize', () => this.setFullscreen());
         
@@ -105,7 +115,8 @@ class GameEngine {
                 this.pixelSprites.loadSprite('./assets/sprites/decorations.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/coin.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/hazards.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/shopkeeper.ass')
+                this.pixelSprites.loadSprite('./assets/sprites/shopkeeper.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/Collectibles.ass')
             ]);
             console.log('Sprites loaded successfully');
         } catch (error) {
@@ -154,12 +165,15 @@ class GameEngine {
             console.log(`State changing from ${oldState} to ${newState} at frame ${this.frameCount}`);
             this.gameState = newState;
             
-            // Reset inventory when starting a new game
+            // Don't reset coins when starting a new game
             if (newState === 'playing') {
+                const currentCoins = this.inventory.coins;
                 this.inventory = {
                     yellowKeys: 0,
                     blueKeys: 0,
-                    redKeys: 0
+                    redKeys: 0,
+                    coins: currentCoins,  // Preserve coins
+                    levelCoins: 0
                 };
             }
             
@@ -250,25 +264,15 @@ class GameEngine {
     }
 
     toggleShop() {
-        if (!this.levelManager) {
-            // Create a minimal level manager for shop-only mode
-            this.levelManager = new LevelManager(this);
-            this.levelManager.inventory = { coins: 100 }; // Give some starting coins for testing
-        }
-        
         this.isShopOpen = !this.isShopOpen;
         if (this.isShopOpen) {
+            // Don't create a new level manager if we're just opening the shop
             this.shopManager.showMessage('entrance');
-            // Ensure shop items are loaded
             if (!this.shopManager.categories || this.shopManager.categories.length === 0) {
                 this.shopManager.loadShopItems();
             }
-        } else {
-            // When closing shop, return to menu if we weren't in a level
-            if (!this.levelManager.currentLevel) {
-                this.setState('menu');
-            }
         }
+        // Don't change state when closing shop
     }
 
     addKey(color) {
@@ -323,6 +327,24 @@ class GameEngine {
 
     setLevelManager(levelManager) {
         this.levelManager = levelManager;
+        // Set initial zoom based on level size
+        this.updateZoom();
+    }
+
+    updateZoom() {
+        if (!this.levelManager || !this.levelManager.currentLevel) return;
+        
+        // Check if level is large
+        const level = this.levelManager.currentLevel;
+        const isLargeLevel = level[0].length > 15 || level.length > 15;
+        
+        // Set zoom level
+        this.zoom = isLargeLevel ? 2 : 1;
+        this.renderer.setZoom(this.zoom);
+
+        // Update viewport calculations
+        this.viewportWidth = Math.ceil(this.canvas.width / (this.tileSize * this.zoom));
+        this.viewportHeight = Math.ceil(this.canvas.height / (this.tileSize * this.zoom));
     }
 
     damage() {
@@ -373,6 +395,175 @@ class GameEngine {
         // Continue the loop
         if (this.running) {
             requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+        }
+    }
+
+    loadLevel(levelNumber) {
+        // ...existing code...
+
+        // Set zoom based on level size
+        const isLargeLevel = this.currentLevel[0].length > 15 || this.currentLevel.length > 15;
+        if (isLargeLevel) {
+            this.renderer.setZoom(2); // Zoom IN for large levels (focused on player)
+            this.currentZoom = 2;
+            this.targetZoom = 2;
+        } else {
+            this.renderer.setZoom(1);
+            this.currentZoom = 1;
+            this.targetZoom = 1;
+        }
+
+        // Calculate level dimensions
+        this.levelWidth = this.currentLevel[0].length * this.tileSize;
+        this.levelHeight = this.currentLevel.length * this.tileSize;
+    }
+
+    update() {
+        if (!this.levelManager || !this.playerPosition) return;
+
+        // Calculate camera position with zoom
+        const viewWidth = this.canvas.width / this.zoom;
+        const viewHeight = this.canvas.height / this.zoom;
+
+        // Center camera on player
+        const targetX = (this.playerPosition.x * this.tileSize) - (viewWidth / 2);
+        const targetY = (this.playerPosition.y * this.tileSize) - (viewHeight / 2);
+
+        // Smooth camera movement
+        this.cameraX += (targetX - this.cameraX) * 0.1;
+        this.cameraY += (targetY - this.cameraY) * 0.1;
+
+        // Calculate level boundaries
+        const levelWidth = this.levelManager.currentLevel[0].length * this.tileSize;
+        const levelHeight = this.levelManager.currentLevel.length * this.tileSize;
+
+        // Clamp camera to level bounds
+        this.cameraX = Math.max(0, Math.min(this.cameraX, levelWidth - viewWidth));
+        this.cameraY = Math.max(0, Math.min(this.cameraY, levelHeight - viewHeight));
+
+        if (this.levelManager) {
+            this.levelManager.checkCollectibles(this.playerPosition.x, this.playerPosition.y);
+        }
+    }
+
+    render() {
+        // ...existing code...
+        this.renderer.render(this.currentLevel, this.entities, this.cameraX, this.cameraY);
+        // ...existing code...
+    }
+
+    getCoins() {
+        return this.inventory.coins;
+    }
+
+    getLevelCoins() {
+        return this.inventory.levelCoins;
+    }
+
+    addLevelCoin() {
+        this.inventory.levelCoins++;
+        this.audio.playSoundEffect('coin_collect');
+    }
+
+    addCoinsToGlobal(amount, animate = false) {
+        if (!this.inventory) {
+            this.inventory = {
+                yellowKeys: 0,
+                blueKeys: 0,
+                redKeys: 0,
+                coins: 0,
+                levelCoins: 0
+            };
+        }
+
+        if (animate) {
+            // Animate coins being added one by one
+            let added = 0;
+            const interval = setInterval(() => {
+                if (added < amount) {
+                    this.inventory.coins++;
+                    this.audio.playSoundEffect('coin_add');
+                    added++;
+                } else {
+                    clearInterval(interval);
+                    localStorage.setItem('gameCoins', this.inventory.coins.toString());
+                }
+            }, 100); // Add a coin every 100ms
+        } else {
+            this.inventory.coins += amount;
+            localStorage.setItem('gameCoins', this.inventory.coins.toString());
+        }
+        
+        // Make sure the coins value persists
+        localStorage.setItem('gameCoins', this.inventory.coins.toString());
+    }
+
+    resetLevelCoins() {
+        this.inventory.levelCoins = 0;
+    }
+
+    spendCoins(amount) {
+        if (this.inventory.coins >= amount) {
+            this.inventory.coins -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    drawLevel() {
+        // ...existing code...
+
+        // Draw coin counters
+        const padding = 10;
+        const iconSize = 32;
+        const spacing = 10;
+
+        // Draw global coins at the top
+        this.ctx.save();
+        this.pixelSprites.drawSprite('coin', 
+            padding, 
+            padding, 
+            iconSize, 
+            iconSize, 
+            'idle');
+        
+        this.ctx.textAlign = 'left';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 24px Arial';
+        this.ctx.fillText(
+            `${this.inventory.coins}`,
+            padding + iconSize + spacing,
+            padding + iconSize/2
+        );
+
+        // Draw level coins at the bottom
+        this.pixelSprites.drawSprite('coin', 
+            padding, 
+            this.canvas.height - padding - iconSize, 
+            iconSize, 
+            iconSize, 
+            'idle');
+        
+        this.ctx.fillText(
+            `${this.inventory.levelCoins}`,
+            padding + iconSize + spacing,
+            this.canvas.height - padding - iconSize/2
+        );
+        this.ctx.restore();
+
+        // ...existing code...
+    }
+
+    loadSavedCoins() {
+        try {
+            const savedCoins = localStorage.getItem('gameCoins');
+            if (savedCoins) {
+                this.inventory.coins = parseInt(savedCoins) || 0;
+            }
+        } catch (error) {
+            console.error('Error loading saved coins:', error);
+            this.inventory.coins = 0;
         }
     }
 }
