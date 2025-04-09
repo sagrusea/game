@@ -1,0 +1,21 @@
+sprite "tnt" {
+    size: 8x8
+    colors {
+        R: #FF0000
+        D: #AA0000
+        W: #FFFFFF
+        B: #000000
+    }
+    frames {
+        idle {
+            R R R R R R R R
+            R W W R R W W R
+            R W W R R W W R
+            R R R R R R R R
+            R D D R R D D R
+            R D D R R D D R
+            R R R R R R R R
+            B B B B B B B B
+        }
+    }
+}

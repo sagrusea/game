@@ -241,6 +241,8 @@ class LevelManager {
         // Update coins display to show value
         document.getElementById('coinsCollected').textContent = 
             `Coins value collected: ${totalValue}`;
+
+        this.engine.markLevelCompleted(this.currentLevelName);
     }
 
     hideCompletion() {

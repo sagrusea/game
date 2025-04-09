@@ -1,0 +1,21 @@
+sprite "health_potion" {
+    size: 8x8
+    colors {
+        R: #FF0000
+        P: #FF69B4
+        G: #00FF00
+        W: #FFFFFF
+    }
+    frames {
+        idle {
+            . . W W W W . .
+            . W R R R R W .
+            W R R R R R R W
+            W R R R R R R W
+            W R R R R R R W
+            . W R R R R W .
+            . . W W W W . .
+            . . . W W . . .
+        }
+    }
+}

@@ -2,24 +2,24 @@
     "items": [
         {
             "name": "TNT",
-            "description": "Destroys walls",
             "sprite": "tnt",
-            "price": 50,
-            "effect": "destroyWalls"
+            "price": 100,
+            "description": "Powerful explosive that can destroy walls and clear paths.",
+            "category": "consumable"
         },
         {
             "name": "Health Potion",
-            "description": "Restores health",
             "sprite": "health_potion",
-            "price": 30,
-            "effect": "restoreHealth"
+            "price": 150,
+            "description": "Restores your health to full when consumed.",
+            "category": "consumable"
         },
         {
             "name": "Speed Boost",
-            "description": "Increases speed",
             "sprite": "speed_boost",
-            "price": 40,
-            "effect": "increaseSpeed"
+            "price": 200,
+            "description": "Temporarily increases your movement speed.",
+            "category": "powerup"
         }
     ]
 }

@@ -19,3 +19,31 @@ Escape Game is a 2D puzzle game where players navigate through levels using keys
 
 ### Project Setup
 1. Clone the repository:
+
+
+Basic Tiles
+Empty (.)
+Wall (x)
+Plank Wall (P)
+Plank Floor (.)|I
+Stone Floor (.)|S
+Special Tiles
+Player Start (c)
+Finish (f)
+Spike (j)
+Keys & Doors
+Yellow Key (k)
+Yellow Lock (L)
+Blue Key (K)
+Blue Lock (B)
+Red Key (Y)
+Red Lock (R)
+Mechanisms
+Plate (p)
+Mechanism Door (D)
+Block (b)
+Collectibles
+Bronze Coin (C)
+Silver Coin (V)
+Gold Coin (N)
+Resize Grid

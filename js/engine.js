@@ -37,10 +37,14 @@ class GameEngine {
         this.cameraX = 0;
         this.cameraY = 0;
         this.zoom = 1;
+        this.completedLevels = new Set(); // Add this line
         
         // Initialize LevelManager
         this.levelManager = new LevelManager(this);
         this.levelManager.collectibles = []; // Move it here after initialization
+
+        this.coinManager = new CoinManager();
+        this.inventory.coins = this.coinManager.loadCoins();
         
         window.addEventListener('resize', () => this.setFullscreen());
         
@@ -164,33 +168,60 @@ class GameEngine {
     setState(newState) {
         if (this.validStates.includes(newState)) {
             const oldState = this.gameState;
-            console.log(`State changing from ${oldState} to ${newState} at frame ${this.frameCount}`);
             this.gameState = newState;
             
-            // Don't reset coins when starting a new game
             if (newState === 'playing') {
-                const currentCoins = this.inventory.coins;
-                this.inventory = {
-                    yellowKeys: 0,
-                    blueKeys: 0,
-                    redKeys: 0,
-                    coins: currentCoins,  // Preserve coins
-                    levelCoins: 0
-                };
+                this.resetGameState();
+            } else if (newState === 'menu') {
+                // Clear level state when returning to menu
+                if (this.levelManager) {
+                    this.levelManager.currentLevel = null;
+                    this.levelManager.currentLevelName = null;
+                    this.levelManager.collectibles = [];
+                }
+                this.playerPosition = { x: 0, y: 0 };
             }
             
-            // Force a redraw when state changes
+            // Force menu redraw
             if (this.menuManager) {
                 this.menuManager.onStateChange(oldState, newState);
-                // Ensure immediate redraw
                 this.menuManager.drawMenu();
             }
-        } else {
-            console.error('Invalid game state:', newState);
         }
-        if (newState === 'menu' && this.isPaused) {
-            this.togglePause();
+    }
+
+    resetGameState() {
+        // Preserve only global coins
+        const currentCoins = this.inventory.coins;
+        
+        // Reset inventory
+        this.inventory = {
+            yellowKeys: 0,
+            blueKeys: 0,
+            redKeys: 0,
+            coins: currentCoins,
+            levelCoins: 0
+        };
+
+        // Reset level state
+        if (this.levelManager) {
+            const currentLevelName = this.levelManager.currentLevelName;
+            
+            // If level was completed before, force a fresh reload
+            if (this.completedLevels.has(currentLevelName)) {
+                this.levelManager.currentLevel = null;
+                this.levelManager.loadLevel(currentLevelName);
+                this.completedLevels.delete(currentLevelName); // Reset completion status
+            }
+
+            this.levelManager.collectibles = [];
+            this.levelManager.movableBlocks = new Map();
+            this.levelManager.customFloors = new Map();
         }
+
+        // Reset player state
+        this.playerPosition = { x: 0, y: 0 };
+        this.currentHealth = this.maxHealth;
     }
 
     showCurrentTrack() {
@@ -488,16 +519,13 @@ class GameEngine {
                     added++;
                 } else {
                     clearInterval(interval);
-                    localStorage.setItem('gameCoins', this.inventory.coins.toString());
+                    this.coinManager.saveCoins(this.inventory.coins);
                 }
             }, 100); // Add a coin every 100ms
         } else {
             this.inventory.coins += amount;
-            localStorage.setItem('gameCoins', this.inventory.coins.toString());
+            this.coinManager.saveCoins(this.inventory.coins);
         }
-        
-        // Make sure the coins value persists
-        localStorage.setItem('gameCoins', this.inventory.coins.toString());
     }
 
     resetLevelCoins() {
@@ -507,6 +535,7 @@ class GameEngine {
     spendCoins(amount) {
         if (this.inventory.coins >= amount) {
             this.inventory.coins -= amount;
+            this.coinManager.saveCoins(this.inventory.coins);
             return true;
         }
         return false;
@@ -567,5 +596,9 @@ class GameEngine {
             console.error('Error loading saved coins:', error);
             this.inventory.coins = 0;
         }
+    }
+
+    markLevelCompleted(levelName) {
+        this.completedLevels.add(levelName);
     }
 }
