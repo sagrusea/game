@@ -281,3 +281,54 @@ canvas {
     font-weight: bold;
     margin-right: 20px;
 }
+
+.shop-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    background: #333;
+    border: 2px solid #555;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+    width: 150px;
+    height: 200px;
+    position: relative;
+}
+
+.shop-item-sprite {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 10px;
+}
+
+.shop-item-name {
+    font-size: 18px;
+    color: white;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.shop-item-price {
+    font-size: 14px;
+    color: #FFD700;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
+
+.shop-item-buy {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.shop-item-buy:hover {
+    background: #45a049;
+}

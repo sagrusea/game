@@ -85,3 +85,10 @@ sfx "failure" {
         note F2 0.3
     }
 }
+
+sfx "explosion" {
+    type: note
+    frequency: 60
+    duration: 0.5
+    wave: sawtooth
+}

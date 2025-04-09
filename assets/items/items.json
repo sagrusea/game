@@ -1,0 +1,25 @@
+{
+    "items": [
+        {
+            "name": "TNT",
+            "description": "Destroys walls",
+            "sprite": "tnt",
+            "price": 50,
+            "effect": "destroyWalls"
+        },
+        {
+            "name": "Health Potion",
+            "description": "Restores health",
+            "sprite": "health_potion",
+            "price": 30,
+            "effect": "restoreHealth"
+        },
+        {
+            "name": "Speed Boost",
+            "description": "Increases speed",
+            "sprite": "speed_boost",
+            "price": 40,
+            "effect": "increaseSpeed"
+        }
+    ]
+}

@@ -107,6 +107,8 @@ class GameEngine {
         try {
             await Promise.all([
                 this.pixelSprites.loadSprite('./assets/sprites/player.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/items.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/Items.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/block.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/keys.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/walls.ass'),
