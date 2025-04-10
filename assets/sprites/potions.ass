@@ -1,0 +1,161 @@
+sprite "health_potion" {
+    size: 8x8
+    colors {
+        A: #6D360F
+        B: #AD1616
+        C: #C81A1A
+        D: #F0F0F0
+        E: #FFFFFF
+        F: #E21F1F
+        G: #884313
+        H: #D2D2D2
+        I: #E1E1E1
+        J: #52290B
+        K: #C3C3C3
+        L: #E31D1D
+    }
+    frames {
+        idle {
+            . . . J G . . .
+            . . A A G A . .
+            . . H A A E . .
+            . . I B C E . .
+            . K C B C C D .
+            . I F F L B D .
+            . . H F B E . .
+            . . . D D . . .
+        }
+        empty {
+            . . . G D . . .
+            . . A A D A . .
+            . . E A A C . .
+            . . F . . C . .
+            . H . . . . B .
+            . F . . . . B .
+            . . E . . C . .
+            . . . B B . . .
+        }
+    }
+}
+sprite "health_potion_big" {
+    size: 8x8
+    colors {
+        A: #C81A1A
+        B: #AD1616
+        C: #E21F1F
+        D: #D2D2D2
+        E: #FFFFFF
+        F: #6D360F
+        G: #F0F0F0
+        H: #884313
+        I: #E1E1E1
+        J: #A35017
+        K: #B4B4B4
+        L: #921313
+        M: #E63A3A
+        N: #C3C3C3
+        O: #D6D6D6
+    }
+    frames {
+        idle {
+            . . F H J F . .
+            . . D H F E . .
+            . K C A B A E .
+            G L M A C B A G
+            N C B B C A B E
+            D A C C B C A E
+            . O A B A B I .
+            . . I D D G . .
+        }
+        empty {
+            . . C E G C . .
+            . . A E C B . .
+            . H . . . . B .
+            D . . . . . . D
+            I . . . . . . B
+            A . . . . . . B
+            . J . . . . F .
+            . . F A A D . .
+        }
+    }
+}
+sprite "speed_potion" {
+    size: 8x8
+    colors {
+        A: #6D360F
+        B: #053BC0
+        C: #0432A2
+        D: #F0F0F0
+        E: #FFFFFF
+        F: #0644DE
+        G: #884313
+        H: #D2D2D2
+        I: #E1E1E1
+        J: #52290B
+        K: #C3C3C3
+    }
+    frames {
+        idle {
+            . . . J G . . .
+            . . A A G A . .
+            . . H A A E . .
+            . . I C B E . .
+            . K F C B B D .
+            . I B F F C D .
+            . . H B C E . .
+            . . . D D . . .
+        }
+        empty {
+            . . . G D . . .
+            . . A A D A . .
+            . . E A A C . .
+            . . F . . C . .
+            . H . . . . B .
+            . F . . . . B .
+            . . E . . C . .
+            . . . B B . . .
+        }
+    }
+}
+sprite "speed_potion_big" {
+    size: 8x8
+    colors {
+        A: #0644DE
+        B: #0A4FF8
+        C: #053BC0
+        D: #D2D2D2
+        E: #FFFFFF
+        F: #6D360F
+        G: #0432A2
+        H: #F0F0F0
+        I: #884313
+        J: #E1E1E1
+        K: #A35017
+        L: #B4B4B4
+        M: #C3C3C3
+        N: #2864F9
+        O: #D6D6D6
+    }
+    frames {
+        idle {
+            . . F I K F . .
+            . . D I F E . .
+            . L B B G A E .
+            H C A C A G A H
+            M B N A B A G E
+            D B C C A A A E
+            . O B C C B J .
+            . . J D D H . .
+        }
+        empty {
+            . . C E G C . .
+            . . A E C B . .
+            . H . . . . B .
+            D . . . . . . D
+            I . . . . . . B
+            A . . . . . . B
+            . J . . . . F .
+            . . F A A D . .
+        }
+    }
+}

@@ -216,6 +216,16 @@ canvas {
     box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
 }
 
+.option-button.danger {
+    background: #8B0000;
+    border-color: #FF0000;
+}
+
+.option-button.danger:hover {
+    background: #A00000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
 .options-tabs {
     display: flex;
     justify-content: center;

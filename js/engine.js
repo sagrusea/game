@@ -132,6 +132,9 @@ class GameEngine {
             this.pauseOverlay.style.display = 'none';
             this.setState('menu');
         };
+
+        // Add reset progress handler
+        document.getElementById('resetProgress').onclick = () => this.resetProgress();
     }
 
     async loadSprites() {
@@ -142,7 +145,7 @@ class GameEngine {
             const sprites = [
                 'player', 'items', 'Items', 'block', 'keys', 'walls',
                 'doors', 'floor', 'decorations', 'coin', 'hazards',
-                'shopkeeper', 'tnt', 'Collectibles'
+                'shopkeeper', 'tnt', 'Collectibles', 'potions'
             ];
 
             for (const sprite of sprites) {
@@ -206,6 +209,11 @@ class GameEngine {
         if (this.validStates.includes(newState)) {
             const oldState = this.gameState;
             this.gameState = newState;
+            
+            if (oldState === 'shop') {
+                this.isShopOpen = false;
+                this.shopManager.resetState();
+            }
             
             if (newState === 'playing') {
                 this.resetGameState();
@@ -712,6 +720,33 @@ class GameEngine {
         if (!this.inventory.skins.includes(skinName)) {
             this.inventory.skins.push(skinName);
             this.saveSkins();
+        }
+    }
+
+    resetProgress() {
+        if (confirm('Are you sure you want to reset all progress? This cannot be undone!')) {
+            // Clear all game data
+            localStorage.clear();
+            
+            // Reset inventory
+            this.inventory = {
+                yellowKeys: 0,
+                blueKeys: 0,
+                redKeys: 0,
+                coins: 0,
+                levelCoins: 0,
+                skins: [],
+                currentSkin: null
+            };
+            
+            // Reset completed levels
+            this.completedLevels = new Set();
+            
+            // Return to menu
+            this.setState('menu');
+            
+            // Hide options
+            document.getElementById('optionsOverlay').style.display = 'none';
         }
     }
 }

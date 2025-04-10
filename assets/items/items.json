@@ -9,17 +9,31 @@
         },
         {
             "name": "Health Potion",
-            "price": 150,
+            "price": 50,
             "category": "Items", 
-            "sprite": "potion",
-            "description": "Restores health"
+            "sprite": "health_potion",
+            "description": "Restores 1 hp"
+        },
+        {
+            "name": "Health Potion Big",
+            "price": 70,
+            "category": "Items", 
+            "sprite": "health_potion_big",
+            "description": "Restores health to the max"
         },
         {
             "name": "Speed Boost",
-            "price": 200,
+            "price": 60,
             "category": "Items",
-            "sprite": "boots",
+            "sprite": "speed_potion",
             "description": "Temporary speed increase"
+        },
+        {
+            "name": "Speed Boost",
+            "price": 100,
+            "category": "Items",
+            "sprite": "speed_potion_big",
+            "description": "longer speed increase"
         },
         {
             "name": "Knight",

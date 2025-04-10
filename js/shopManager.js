@@ -15,6 +15,10 @@ class ShopManager {
         this.phaseChangeTime = 0;
         this.loadShopItems();
         this.loadShopkeeperPhrases();
+        this.currentPage = 0;
+        this.itemsPerPage = 3;
+        this.currentCategory = 0;
+        this.categoryPages = new Map(); // Store current page for each category
     }
 
     async loadShopItems() {
@@ -159,73 +163,94 @@ class ShopManager {
         this.engine.ctx.fillText(`: ${this.engine.getCoins()}`, 60, 100);
         this.engine.ctx.restore();
 
-        // Layout items in a grid
+        // Layout constants
         const itemsPerRow = 3;
         const itemWidth = 200;
         const itemHeight = 250;
+        const categorySpacing = 50; // Space between categories
         const startX = (this.engine.canvas.width - (itemWidth * itemsPerRow + 40 * (itemsPerRow - 1))) / 2;
         const startY = 150;
 
-        // Draw default skin button at top
-        this.drawDefaultSkinButton(20, 120, 120, 40);
+        // Draw categories
+        this.categories.forEach((category, categoryIndex) => {
+            // Initialize category page if not exists
+            if (!this.categoryPages.has(category)) {
+                this.categoryPages.set(category, 0);
+            }
 
-        this.items.forEach((item, index) => {
-            const row = Math.floor(index / itemsPerRow);
-            const col = index % itemsPerRow;
-            const x = startX + col * (itemWidth + 40);
-            const y = startY + row * (itemHeight + 20);
+            const categoryY = startY + categoryIndex * (itemHeight + categorySpacing);
+            
+            // Draw category header with arrows
+            this.drawCategoryHeader(category, startX, categoryY - 10);
+            
+            // Get items and handle pagination
+            const categoryItems = this.items.filter(item => item.category === category);
+            const currentPage = this.categoryPages.get(category);
+            const totalPages = Math.ceil(categoryItems.length / itemsPerRow);
+            const pageItems = categoryItems.slice(currentPage * itemsPerRow, (currentPage + 1) * itemsPerRow);
 
-            // Item background
-            this.engine.ctx.fillStyle = 'rgba(74, 26, 140, 0.7)';
-            this.engine.ctx.fillRect(x, y, itemWidth, itemHeight);
+            // Draw items for current page
+            pageItems.forEach((item, index) => {
+                const x = startX + index * (itemWidth + 40);
+                const y = categoryY;
 
-            // Draw item sprite
-            this.engine.pixelSprites.drawSprite(
-                item.sprite || 'coin',
-                x + (itemWidth - 64) / 2,
-                y + 20,
-                64,
-                64,
-                'idle'
-            );
+                // Draw item card
+                this.engine.ctx.fillStyle = 'rgba(74, 26, 140, 0.7)';
+                this.engine.ctx.fillRect(x, y, itemWidth, itemHeight);
 
-            // Draw item name
-            this.engine.ctx.fillStyle = '#FFFFFF';
-            this.engine.ctx.font = 'bold 20px Arial';
-            this.engine.ctx.textAlign = 'center';
-            this.engine.ctx.fillText(item.name, x + itemWidth/2, y + 100);
-
-            // Draw description
-            this.engine.ctx.font = '16px Arial';
-            this.engine.ctx.fillStyle = '#CCCCCC';
-            const description = item.description || 'No description available';
-            this.wrapText(this.engine.ctx, description, x + itemWidth/2, y + 130, itemWidth - 20, 20);
-
-            // Draw price with coin icon
-            this.engine.pixelSprites.drawSprite('coin', x + itemWidth/2 - 32, y + itemHeight - 50, 24, 24, 'idle');
-            this.engine.ctx.fillStyle = '#FFD700';
-            this.engine.ctx.fillText(`${item.price}`, x + itemWidth/2 + 20, y + itemHeight - 35);
-
-            // For skins, show equip button if owned
-            if (item.category === "Skins" && 
-                this.engine.inventory.skins && 
-                this.engine.inventory.skins.includes(item.name)) {
-                
-                const isEquipped = this.engine.inventory.currentSkin === item.name;
-                const buttonColor = isEquipped ? '#666666' : '#45a049';
-                const buttonText = isEquipped ? 'Equipped' : 'Equip';
-                
-                this.drawEquipButton(
-                    x + itemWidth/2 - 40, 
-                    y + itemHeight - 30, 
-                    80, 
-                    30, 
-                    buttonColor,
-                    buttonText
+                // Draw item sprite
+                this.engine.pixelSprites.drawSprite(
+                    item.sprite || 'coin',
+                    x + (itemWidth - 64) / 2,
+                    y + 20,
+                    64,
+                    64,
+                    'idle'
                 );
-            } else {
-                // Draw regular buy button
-                this.drawBuyButton(x + itemWidth/2 - 40, y + itemHeight - 30, 80, 30, this.engine.getCoins() >= item.price);
+
+                // Draw item name
+                this.engine.ctx.fillStyle = '#FFFFFF';
+                this.engine.ctx.font = 'bold 20px Arial';
+                this.engine.ctx.textAlign = 'center';
+                this.engine.ctx.fillText(item.name, x + itemWidth/2, y + 100);
+
+                // Draw description
+                this.engine.ctx.font = '16px Arial';
+                this.engine.ctx.fillStyle = '#CCCCCC';
+                const description = item.description || 'No description available';
+                this.wrapText(this.engine.ctx, description, x + itemWidth/2, y + 130, itemWidth - 20, 20);
+
+                // Draw price with coin icon
+                this.engine.pixelSprites.drawSprite('coin', x + itemWidth/2 - 32, y + itemHeight - 50, 24, 24, 'idle');
+                this.engine.ctx.fillStyle = '#FFD700';
+                this.engine.ctx.fillText(`${item.price}`, x + itemWidth/2 + 20, y + itemHeight - 35);
+
+                // For skins, show equip button if owned
+                if (item.category === "Skins" && 
+                    this.engine.inventory.skins && 
+                    this.engine.inventory.skins.includes(item.name)) {
+                    
+                    const isEquipped = this.engine.inventory.currentSkin === item.name;
+                    const buttonColor = isEquipped ? '#666666' : '#45a049';
+                    const buttonText = isEquipped ? 'Equipped' : 'Equip';
+                    
+                    this.drawEquipButton(
+                        x + itemWidth/2 - 40, 
+                        y + itemHeight - 30, 
+                        80, 
+                        30, 
+                        buttonColor,
+                        buttonText
+                    );
+                } else {
+                    // Draw regular buy button
+                    this.drawBuyButton(x + itemWidth/2 - 40, y + itemHeight - 30, 80, 30, this.engine.getCoins() >= item.price);
+                }
+            });
+
+            // Draw category pagination arrows
+            if (totalPages > 1) {
+                this.drawCategoryArrows(category, startX, categoryY, itemWidth * itemsPerRow + 80);
             }
         });
 
@@ -234,6 +259,51 @@ class ShopManager {
             this.currentPhrase = this.getRandomPhrase();
             this.phaseChangeTime = Date.now();
         }
+    }
+
+    drawPaginationControls(totalPages) {
+        const buttonWidth = 80;
+        const buttonHeight = 30;
+        const spacing = 20;
+        const totalWidth = (buttonWidth * 2) + spacing;
+        const startX = (this.engine.canvas.width - totalWidth) / 2;
+        const y = this.engine.canvas.height - buttonHeight - 20;
+
+        // Draw page indicator
+        this.engine.ctx.save();
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.font = '20px Arial';
+        this.engine.ctx.textAlign = 'center';
+        this.engine.ctx.fillText(`Page ${this.currentPage + 1}/${totalPages}`, this.engine.canvas.width / 2, y - 20);
+
+        // Previous button
+        if (this.currentPage > 0) {
+            this.drawShopButton('Previous', startX, y, buttonWidth, buttonHeight);
+        }
+
+        // Next button
+        if (this.currentPage < totalPages - 1) {
+            this.drawShopButton('Next', startX + buttonWidth + spacing, y, buttonWidth, buttonHeight);
+        }
+        this.engine.ctx.restore();
+    }
+
+    drawShopButton(text, x, y, width, height) {
+        const isHovered = this.isMouseOverButton(x, y, width, height);
+        
+        this.engine.ctx.fillStyle = isHovered ? '#3d1574' : '#2d1054';
+        this.engine.ctx.strokeStyle = '#8a2be2';
+        this.engine.ctx.lineWidth = 2;
+        
+        this.engine.ctx.beginPath();
+        this.engine.ctx.roundRect(x, y, width, height, 5);
+        this.engine.ctx.fill();
+        this.engine.ctx.stroke();
+
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.font = '16px Arial';
+        this.engine.ctx.textAlign = 'center';
+        this.engine.ctx.fillText(text, x + width/2, y + height/2 + 5);
     }
 
     drawBackButton() {
@@ -317,6 +387,49 @@ class ShopManager {
         this.engine.ctx.restore();
     }
 
+    drawCategorySelector() {
+        const y = 100;
+        const arrowWidth = 30;
+        const spacing = 20;
+        const categoryWidth = 150;
+        const centerX = this.engine.canvas.width / 2;
+        
+        // Draw category name
+        this.engine.ctx.save();
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.font = 'bold 24px Arial';
+        this.engine.ctx.textAlign = 'center';
+        this.engine.ctx.fillText(this.categories[this.currentCategory], centerX, y);
+
+        // Draw left arrow if not first category
+        if (this.currentCategory > 0) {
+            this.drawArrow(centerX - categoryWidth/2 - spacing, y - 12, 'left');
+        }
+
+        // Draw right arrow if not last category
+        if (this.currentCategory < this.categories.length - 1) {
+            this.drawArrow(centerX + categoryWidth/2 + spacing, y - 12, 'right');
+        }
+        this.engine.ctx.restore();
+    }
+
+    drawArrow(x, y, direction) {
+        this.engine.ctx.save();
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.beginPath();
+        if (direction === 'left') {
+            this.engine.ctx.moveTo(x + 20, y);
+            this.engine.ctx.lineTo(x, y + 12);
+            this.engine.ctx.lineTo(x + 20, y + 24);
+        } else {
+            this.engine.ctx.moveTo(x, y);
+            this.engine.ctx.lineTo(x + 20, y + 12);
+            this.engine.ctx.lineTo(x, y + 24);
+        }
+        this.engine.ctx.fill();
+        this.engine.ctx.restore();
+    }
+
     isMouseOverButton(x, y, width, height) {
         return this.engine.mousePos.x >= x && 
                this.engine.mousePos.x <= x + width &&
@@ -345,8 +458,15 @@ class ShopManager {
     }
 
     buyItem(item) {
+        // Add debug logging
+        console.log('Attempting to buy:', item);
+        console.log('Current coins:', this.engine.getCoins());
+        console.log('Item price:', item.price);
+
         if (this.engine.getCoins() >= item.price) {
             if (this.engine.spendCoins(item.price)) {
+                console.log('Purchase successful');
+                
                 // Play purchase sound
                 this.engine.audio.synthesizer.playSoundEffect('coin_collect');
                 
@@ -442,80 +562,124 @@ class ShopManager {
     }
 
     handleClick(x, y) {
-        // Handle default skin button
-        if (x >= 20 && x <= 140 && y >= 120 && y <= 160) {
-            this.engine.inventory.currentSkin = null;
-            this.drawShop();
-            return;
-        }
-
-        // Check back button click
-        const buttonWidth = 100;
-        const buttonHeight = 40;
-        const buttonX = this.engine.canvas.width - buttonWidth - 20;
-        const buttonY = 20;
-
-        if (x >= buttonX && x <= buttonX + buttonWidth &&
-            y >= buttonY && y <= buttonY + buttonHeight) {
-            // Clean up shop state
-            this.engine.isShopOpen = false;
-            this.shopContent.innerHTML = '';
-            
-            // Transition to menu state
-            this.engine.setState('menu');
-            
-            // Reset any game state that needs clearing
-            if (this.engine.levelManager) {
-                this.engine.levelManager.currentLevel = null;
-            }
-            
-            // Force a redraw of menu
-            if (this.engine.menuManager) {
-                this.engine.menuManager.drawMenu();
-            }
-            return;
-        }
-
-        // Check buy button clicks
+        // Layout constants - need to match drawShop
         const itemsPerRow = 3;
         const itemWidth = 200;
         const itemHeight = 250;
+        const categorySpacing = 50;
         const startX = (this.engine.canvas.width - (itemWidth * itemsPerRow + 40 * (itemsPerRow - 1))) / 2;
         const startY = 150;
 
-        this.items.forEach((item, index) => {
-            // Calculate item position
-            const row = Math.floor(index / itemsPerRow);
-            const col = index % itemsPerRow;
-            const itemX = startX + col * (itemWidth + 40);
-            const itemY = startY + row * (itemHeight + 20);
+        // Back button check
+        if (x >= this.engine.canvas.width - 120 && x <= this.engine.canvas.width - 20 &&
+            y >= 20 && y <= 60) {
+            this.engine.isShopOpen = false;
+            this.engine.setState('menu');
+            return;
+        }
 
-            // Buy/Equip button position
-            const buttonX = itemX + itemWidth/2 - 40;
-            const buttonY = itemY + itemHeight - 30;
-            const buttonWidth = 80;
-            const buttonHeight = 30;
+        // Check category arrows and items
+        this.categories.forEach((category, categoryIndex) => {
+            const categoryY = startY + categoryIndex * (itemHeight + categorySpacing);
+            const currentPage = this.categoryPages.get(category);
+            const categoryItems = this.items.filter(item => item.category === category);
+            const totalPages = Math.ceil(categoryItems.length / itemsPerRow);
+            const rowWidth = itemWidth * itemsPerRow + 80;
 
-            if (x >= buttonX && x <= buttonX + buttonWidth &&
-                y >= buttonY && y <= buttonY + buttonHeight) {
-                
-                if (item.category === "Skins" && 
-                    this.engine.inventory.skins && 
-                    this.engine.inventory.skins.includes(item.name)) {
-                    // Handle equip
-                    this.engine.setCurrentSkin(
-                        this.engine.inventory.currentSkin === item.name ? null : item.name
-                    );
-                    this.drawShop();
-                } else {
-                    // Handle buy
-                    this.buyItem(item);
+            // Get visible items for this category
+            const pageItems = categoryItems.slice(
+                currentPage * itemsPerRow, 
+                (currentPage + 1) * itemsPerRow
+            );
+
+            // Check items in this category
+            pageItems.forEach((item, index) => {
+                const itemX = startX + index * (itemWidth + 40);
+                const itemY = categoryY;
+                const buttonX = itemX + itemWidth/2 - 40;
+                const buttonY = itemY + itemHeight - 30;
+
+                // Check if click is within item card area
+                if (x >= itemX && x <= itemX + itemWidth &&
+                    y >= itemY && y <= itemY + itemHeight) {
+                    
+                    // Check if click is on buy/equip button
+                    if (x >= buttonX && x <= buttonX + 80 &&
+                        y >= buttonY && y <= buttonY + 30) {
+                        if (item.category === "Skins" && 
+                            this.engine.inventory.skins && 
+                            this.engine.inventory.skins.includes(item.name)) {
+                            this.engine.setCurrentSkin(
+                                this.engine.inventory.currentSkin === item.name ? null : item.name
+                            );
+                        } else {
+                            this.buyItem(item);
+                        }
+                    }
+                }
+            });
+
+            // Check category arrows - more precise click detection
+            if (totalPages > 1) {
+                // Left arrow
+                if (currentPage > 0 && 
+                    x >= startX - 40 && x <= startX && 
+                    y >= categoryY + 80 && y <= categoryY + 120) {
+                    this.categoryPages.set(category, currentPage - 1);
+                    return;
+                }
+
+                // Right arrow
+                if (currentPage < totalPages - 1 && 
+                    x >= startX + rowWidth + 10 && x <= startX + rowWidth + 50 && 
+                    y >= categoryY + 80 && y <= categoryY + 120) {
+                    this.categoryPages.set(category, currentPage + 1);
+                    return;
                 }
             }
         });
     }
 
+    drawCategoryHeader(category, x, y) {
+        this.engine.ctx.save();
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.font = 'bold 24px Arial';
+        this.engine.ctx.textAlign = 'left';
+        this.engine.ctx.fillText(category, x, y);
+        this.engine.ctx.restore();
+    }
+
+    drawCategoryArrows(category, startX, y, width) {
+        const currentPage = this.categoryPages.get(category);
+        const categoryItems = this.items.filter(item => item.category === category);
+        const totalPages = Math.ceil(categoryItems.length / 3);
+
+        // Left arrow
+        if (currentPage > 0) {
+            this.drawArrow(startX - 40, y + 100, 'left');
+        }
+
+        // Right arrow
+        if (currentPage < totalPages - 1) {
+            this.drawArrow(startX + width + 10, y + 100, 'right');
+        }
+
+        // Page indicator
+        this.engine.ctx.save();
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.font = '16px Arial';
+        this.engine.ctx.textAlign = 'center';
+        this.engine.ctx.fillText(`${currentPage + 1}/${totalPages}`, startX + width/2, y + 180);
+        this.engine.ctx.restore();
+    }
+
     showMessage(message) {
         console.log(message);
+    }
+
+    resetState() {
+        this.currentPage = 0;
+        this.currentCategory = 0;
+        this.categoryPages.clear();
     }
 }
