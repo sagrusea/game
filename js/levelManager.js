@@ -614,6 +614,12 @@ class LevelManager {
         const customFloor = this.customFloors.get(pos);
         layers.push(customFloor || 'floor');
 
+        // Add spikes if present
+        const spikeState = this.spikes.get(pos);
+        if (spikeState) {
+            layers.push('spikes'); // Just push the sprite name, frame handled by getTileFrame
+        }
+
         // Rest of layer handling
         const tile = this.currentLevel[tileY][tileX];
 
@@ -690,15 +696,12 @@ class LevelManager {
 
     // Helper method to get the correct frame for a tile
     getTileFrame(sprite, x, y) {
-        switch(sprite) {
-            case 'plate':
-                return this.isPlatePressed(x, y) ? 'pressed' : 'idle';
-            case 'finish':
-                return Math.floor(Date.now() / 500) % 2 === 0 ? 'idle' : 'glow';
-            // Add other special cases...
-            default:
-                return 'idle';
+        // ...existing code...
+        if (sprite === 'spikes') {
+            const spikeState = this.spikes.get(`${x},${y}`);
+            return spikeState.extended ? 'extended' : 'idle'; // Change 'retracted' to 'idle'
         }
+        // ...existing code...
     }
 
     drawLevel() {

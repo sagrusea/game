@@ -38,6 +38,7 @@ class GameEngine {
         this.cameraY = 0;
         this.zoom = 1;
         this.completedLevels = new Set(); // Add this line
+        this.levelSession = null; // Add session state tracking
         
         // Initialize LevelManager
         this.levelManager = new LevelManager(this);
@@ -173,7 +174,8 @@ class GameEngine {
             if (newState === 'playing') {
                 this.resetGameState();
             } else if (newState === 'menu') {
-                // Clear level state when returning to menu
+                // Full reset when returning to menu
+                this.levelSession = null;
                 if (this.levelManager) {
                     this.levelManager.currentLevel = null;
                     this.levelManager.currentLevelName = null;
@@ -194,7 +196,7 @@ class GameEngine {
         // Preserve only global coins
         const currentCoins = this.inventory.coins;
         
-        // Reset inventory
+        // Reset inventory and session
         this.inventory = {
             yellowKeys: 0,
             blueKeys: 0,
@@ -202,21 +204,19 @@ class GameEngine {
             coins: currentCoins,
             levelCoins: 0
         };
+        this.levelSession = null;
 
-        // Reset level state
+        // Force fresh level load
         if (this.levelManager) {
-            const currentLevelName = this.levelManager.currentLevelName;
-            
-            // If level was completed before, force a fresh reload
-            if (this.completedLevels.has(currentLevelName)) {
-                this.levelManager.currentLevel = null;
-                this.levelManager.loadLevel(currentLevelName);
-                this.completedLevels.delete(currentLevelName); // Reset completion status
-            }
-
+            const levelToReload = this.levelManager.currentLevelName;
+            this.levelManager.currentLevel = null;
             this.levelManager.collectibles = [];
             this.levelManager.movableBlocks = new Map();
             this.levelManager.customFloors = new Map();
+            
+            if (levelToReload) {
+                this.levelManager.loadLevel(levelToReload);
+            }
         }
 
         // Reset player state
