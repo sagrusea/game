@@ -203,8 +203,16 @@ class ShopManager {
             this.engine.ctx.fillStyle = '#FFD700';
             this.engine.ctx.fillText(`${item.price}`, x + itemWidth/2 + 20, y + itemHeight - 35);
 
-            // Draw buy button
-            this.drawBuyButton(x + itemWidth/2 - 40, y + itemHeight - 30, 80, 30, this.engine.getCoins() >= item.price);
+            // Show "Owned" instead of buy button for owned skins
+            if (item.category === "Skins" && 
+                this.engine.inventory.skins && 
+                this.engine.inventory.skins.includes(item.name)) {
+                this.engine.ctx.fillStyle = '#45a049';
+                this.engine.ctx.fillText('Owned', x + itemWidth/2, y + itemHeight - 10);
+            } else {
+                // Draw buy button
+                this.drawBuyButton(x + itemWidth/2 - 40, y + itemHeight - 30, 80, 30, this.engine.getCoins() >= item.price);
+            }
         });
 
         // Change phrase occasionally
@@ -296,17 +304,30 @@ class ShopManager {
                 // Animate coins disappearing
                 this.animatePurchase(item);
                 
-                // Add item to inventory
-                switch(item.name) {
-                    case 'TNT':
-                        this.engine.inventory.tnt = (this.engine.inventory.tnt || 0) + 1;
-                        break;
-                    case 'Health Potion':
-                        this.engine.inventory.healthPotions = (this.engine.inventory.healthPotions || 0) + 1;
-                        break;
-                    case 'Speed Boost':
-                        this.engine.inventory.speedBoosts = (this.engine.inventory.speedBoosts || 0) + 1;
-                        break;
+                // Add item to inventory based on category
+                if (item.category === "Skins") {
+                    if (!this.engine.inventory.skins) {
+                        this.engine.inventory.skins = [];
+                    }
+                    if (!this.engine.inventory.skins.includes(item.name)) {
+                        this.engine.inventory.skins.push(item.name);
+                    }
+                    // Set as current skin if none selected
+                    if (!this.engine.inventory.currentSkin) {
+                        this.engine.inventory.currentSkin = item.name;
+                    }
+                } else {
+                    switch(item.name) {
+                        case 'TNT':
+                            this.engine.inventory.tnt = (this.engine.inventory.tnt || 0) + 1;
+                            break;
+                        case 'Health Potion':
+                            this.engine.inventory.healthPotions = (this.engine.inventory.healthPotions || 0) + 1;
+                            break;
+                        case 'Speed Boost':
+                            this.engine.inventory.speedBoosts = (this.engine.inventory.speedBoosts || 0) + 1;
+                            break;
+                    }
                 }
                 
                 // Show success message

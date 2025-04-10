@@ -24,6 +24,8 @@ async function init() {
                     case 'playing':
                         levelManager.drawLevel();
                         break;
+                    case 'shop':
+                        
                 }
                 requestAnimationFrame(gameLoop);
             } catch (error) {

@@ -2,24 +2,45 @@
     "items": [
         {
             "name": "TNT",
-            "sprite": "tnt",
             "price": 100,
-            "description": "Powerful explosive that can destroy walls and clear paths.",
-            "category": "consumable"
+            "category": "Items",
+            "sprite": "tnt",
+            "description": "Destroys walls"
         },
         {
             "name": "Health Potion",
-            "sprite": "health_potion",
             "price": 150,
-            "description": "Restores your health to full when consumed.",
-            "category": "consumable"
+            "category": "Items", 
+            "sprite": "potion",
+            "description": "Restores health"
         },
         {
             "name": "Speed Boost",
-            "sprite": "speed_boost",
             "price": 200,
-            "description": "Temporarily increases your movement speed.",
-            "category": "powerup"
+            "category": "Items",
+            "sprite": "boots",
+            "description": "Temporary speed increase"
+        },
+        {
+            "name": "Knight",
+            "price": 500,
+            "category": "Skins",
+            "sprite": "knight",
+            "description": "A noble warrior skin"
+        },
+        {
+            "name": "Ninja",
+            "price": 750,
+            "category": "Skins",
+            "sprite": "ninja",
+            "description": "A stealthy ninja skin"
+        },
+        {
+            "name": "Wizard",
+            "price": 1000,
+            "category": "Skins",
+            "sprite": "wizard",
+            "description": "A powerful mage skin"
         }
     ]
 }

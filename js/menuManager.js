@@ -658,7 +658,9 @@ class MenuManager {
         console.log('Handling option:', option);
         switch(option) {
             case 'Shop':
-                this.engine.setState('playing');
+                console.log('Opening shop...');
+                this.engine.setState('shop');
+                console.log('Shop state set');
                 this.engine.toggleShop();
                 break;
             case 'Options':

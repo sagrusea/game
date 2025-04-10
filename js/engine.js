@@ -3,7 +3,7 @@ class GameEngine {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.gameState = 'menu'; // Possible states: 'menu', 'instructions', 'start', 'playing', 'options'
-        this.validStates = ['menu', 'playing', 'instructions', 'start', 'options']; // Added 'options'
+        this.validStates = ['menu', 'playing', 'instructions', 'start', 'options', 'shop']; // Added 'options'
         this.playerPosition = { x: 0, y: 0 };
         this.mousePos = { x: 0, y: 0 };
         this.keys = {};
@@ -301,7 +301,9 @@ class GameEngine {
         if (this.isShopOpen) {
             // Don't create a new level manager if we're just opening the shop
             this.shopManager.showMessage('entrance');
+            console.error(!this.shopManager.categories || this.shopManager.categories.length === 0);
             if (!this.shopManager.categories || this.shopManager.categories.length === 0) {
+                console.error('No shop categories found!');
                 this.shopManager.loadShopItems();
             }
         }
@@ -416,7 +418,7 @@ class GameEngine {
             }
         }
 
-        if (this.gameState === 'playing' && this.levelManager) { // Add safety check
+        if (this.gameState === 'shop' && this.levelManager) { // Add safety check
             this.clear();
             this.levelManager.drawLevel(); // FPS is drawn inside drawLevel
             this.drawFPS(); // Make sure FPS is drawn last
