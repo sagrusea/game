@@ -366,3 +366,43 @@ canvas {
     background: #4a1a8c;
     transition: width 0.3s ease;
 }
+
+.pause-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.pause-content {
+    background: #4a1a8c;
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+}
+
+.pause-content button {
+    background: #2d1054;
+    color: white;
+    border: 2px solid #8a2be2;
+    padding: 15px 30px;
+    margin: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    min-width: 150px;
+    transition: all 0.3s ease;
+}
+
+.pause-content button:hover {
+    background: #3d1574;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
+}

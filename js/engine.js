@@ -3,7 +3,7 @@ class GameEngine {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.gameState = 'menu'; // Possible states: 'menu', 'instructions', 'start', 'playing', 'options'
-        this.validStates = ['menu', 'playing', 'instructions', 'start', 'options', 'shop']; // Added 'options'
+        this.validStates = ['menu', 'playing', 'instructions', 'start', 'options', 'shop', 'paused']; // Added 'options'
         this.playerPosition = { x: 0, y: 0 };
         this.mousePos = { x: 0, y: 0 };
         this.keys = {};
@@ -123,6 +123,14 @@ class GameEngine {
             }
             this.addCoins(coins);
             return this.inventory.coins;
+        };
+
+        // Add pause button handlers
+        document.getElementById('resumeButton').onclick = () => this.resumeGame();
+        document.getElementById('pauseMenuButton').onclick = () => {
+            this.isPaused = false;
+            this.pauseOverlay.style.display = 'none';
+            this.setState('menu');
         };
     }
 
@@ -273,24 +281,30 @@ class GameEngine {
     }
 
     togglePause() {
-        this.isPaused = !this.isPaused;
-        if (this.isPaused) {
-            this.pauseOverlay.style.display = 'flex';
-            // Optionally pause music or other animations
-            if (this.audio) {
-                this.audio.stopBackgroundMusic();
-            }
-        } else {
-            this.pauseOverlay.style.display = 'none';
-            if (this.audio) {
-                this.audio.playBackgroundMusic();
+        if (this.gameState === 'playing' || this.gameState === 'paused') {
+            this.isPaused = !this.isPaused;
+            this.gameState = this.isPaused ? 'paused' : 'playing';
+            
+            if (this.isPaused) {
+                this.pauseOverlay.style.display = 'flex';
+                if (this.audio) {
+                    this.audio.stopBackgroundMusic();
+                }
+            } else {
+                this.pauseOverlay.style.display = 'none';
+                if (this.audio) {
+                    this.audio.playBackgroundMusic();
+                }
             }
         }
     }
 
     resumeGame() {
-        if (this.isPaused) {
-            this.togglePause();
+        this.isPaused = false;
+        this.gameState = 'playing';
+        this.pauseOverlay.style.display = 'none';
+        if (this.audio) {
+            this.audio.playBackgroundMusic();
         }
     }
 
@@ -310,7 +324,11 @@ class GameEngine {
 
     toggleFPS() {
         this.showFPS = !this.showFPS;
-        document.getElementById('toggleFPS').textContent = this.showFPS ? 'ON' : 'OFF';
+        // Update button text and save setting
+        const fpsButton = document.getElementById('toggleFPS');
+        if (fpsButton) {
+            fpsButton.textContent = this.showFPS ? 'ON' : 'OFF';
+        }
     }
 
     updateFPS(timestamp) {
@@ -463,6 +481,12 @@ class GameEngine {
             this.drawFPS(); // Make sure FPS is drawn last
             if (this.isShopOpen) {
                 this.shopManager.drawShop();
+            }
+        }
+
+        if (this.gameState === 'playing' && !this.isPaused) {
+            if (this.levelManager) {
+                this.levelManager.drawLevel();
             }
         }
 
