@@ -41,6 +41,11 @@ class GameEngine {
         this.zoom = 1;
         this.completedLevels = new Set(); // Add this line
         this.levelSession = null; // Add session state tracking
+        this.isLoading = true;
+        this.loadingProgress = 0;
+        this.totalAssets = 14; // Total number of assets to load
+        this.MIN_LOADING_TIME = 1000; // Minimum loading screen time in ms
+        this.loadStartTime = Date.now();
         
         // Initialize LevelManager
         this.levelManager = new LevelManager(this);
@@ -122,24 +127,33 @@ class GameEngine {
     }
 
     async loadSprites() {
+        const loadingProgress = document.getElementById('loadingProgress');
+        let loaded = 0;
+        
         try {
-            await Promise.all([
-                this.pixelSprites.loadSprite('./assets/sprites/player.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/items.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/Items.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/block.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/keys.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/walls.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/doors.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/floor.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/decorations.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/coin.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/hazards.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/shopkeeper.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/tnt.ass'),
-                this.pixelSprites.loadSprite('./assets/sprites/Collectibles.ass')
-            ]);
-            console.log('Sprites loaded successfully');
+            const sprites = [
+                'player', 'items', 'Items', 'block', 'keys', 'walls',
+                'doors', 'floor', 'decorations', 'coin', 'hazards',
+                'shopkeeper', 'tnt', 'Collectibles'
+            ];
+
+            for (const sprite of sprites) {
+                await this.pixelSprites.loadSprite(`./assets/sprites/${sprite}.ass`);
+                loaded++;
+                loadingProgress.style.width = `${(loaded / this.totalAssets) * 100}%`;
+            }
+
+            // Calculate remaining time to meet minimum duration
+            const elapsed = Date.now() - this.loadStartTime;
+            const remaining = Math.max(0, this.MIN_LOADING_TIME - elapsed);
+            
+            // Wait for remaining time if needed
+            if (remaining > 0) {
+                await new Promise(resolve => setTimeout(resolve, remaining));
+            }
+
+            document.getElementById('loadingScreen').style.display = 'none';
+            this.isLoading = false;
         } catch (error) {
             console.error('Failed to load sprites:', error);
         }
@@ -284,13 +298,14 @@ class GameEngine {
         const playerX = this.playerPosition.x * 32;
         const playerY = this.playerPosition.y * 32;
         
-        // Check if skin exists before using it
-        const spriteName = this.inventory.currentSkin && 
-                          this.inventory.skins.includes(this.inventory.currentSkin) ? 
-                          this.inventory.currentSkin.toLowerCase() : 'player';
+        // Use exact sprite names as defined in sprite files
+        let spriteName = 'player';
+        if (this.inventory.currentSkin === 'Ninja') {
+            spriteName = 'ninja';
+        }
         
-        const state = 'idle';
-        this.pixelSprites.drawSprite(spriteName, playerX, playerY, 32, 32, state);
+        console.log('Drawing player with sprite:', spriteName);
+        this.pixelSprites.drawSprite(spriteName, playerX, playerY, 32, 32, 'idle');
     }
 
     toggleFPS() {
@@ -644,7 +659,9 @@ class GameEngine {
     loadSavedSkins() {
         try {
             const savedSkins = localStorage.getItem('ownedSkins');
-            return savedSkins ? JSON.parse(savedSkins) : [];
+            const skins = savedSkins ? JSON.parse(savedSkins) : [];
+            console.log('Loaded saved skins:', skins);
+            return skins;
         } catch (error) {
             console.error('Error loading saved skins:', error);
             return [];
@@ -657,8 +674,14 @@ class GameEngine {
     }
 
     setCurrentSkin(skinName) {
+        console.log('Setting skin:', skinName);
         this.inventory.currentSkin = skinName;
+        localStorage.setItem('currentSkin', skinName);
         this.saveSkins();
+        console.log('Saved skin data:', {
+            inventory: this.inventory.currentSkin,
+            localStorage: localStorage.getItem('currentSkin')
+        });
     }
 
     addSkin(skinName) {

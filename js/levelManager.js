@@ -105,6 +105,11 @@ class LevelManager {
             '.': 'floor'  // Default floor type
             // Add more floor type mappings here
         };
+        this.isMoving = false;
+        this.lastMoveTime = 0;
+        this.moveAnimationDelay = 150; // Time in ms between frame changes
+        this.finishAnimationTime = 0;
+        this.finishAnimationInterval = 800; // Time in ms between frame changes
     }
 
     async loadLevels() {
@@ -411,6 +416,8 @@ class LevelManager {
 
         if (moved) {
             if (this.isValidMove(newPos)) {
+                this.isMoving = true;
+                this.lastMoveTime = now;
                 this.engine.audio.synthesizer.playSoundEffect('move');
                 
                 // Handle block pushing
@@ -445,6 +452,8 @@ class LevelManager {
             } else {
                 this.engine.audio.synthesizer.playSoundEffect('collision');
             }
+        } else {
+            this.isMoving = false;
         }
         
         // Add spike update call
@@ -646,7 +655,9 @@ class LevelManager {
                     layers.push('door_mechanism');
                     break;
                 case 'f':
-                    layers.push('finish');
+                    const now = Date.now();
+                    const finishFrame = Math.floor(now / this.finishAnimationInterval) % 2 === 0 ? 'idle' : 'glow';
+                    layers.push(['finish', finishFrame]);
                     break;
                 case 'p':
                     layers.push('plate');
@@ -670,14 +681,15 @@ class LevelManager {
         }
 
         // Draw all layers
-        layers.forEach(sprite => {
+        layers.forEach(layer => {
+            const [sprite, frame] = Array.isArray(layer) ? layer : [layer, 'idle'];
             this.engine.pixelSprites.drawSprite(
                 sprite,
                 offsetX + tileX * tileSize,
                 offsetY + tileY * tileSize,
                 tileSize,
                 tileSize,
-                this.getTileFrame(sprite, tileX, tileY)
+                frame
             );
         });
     }
@@ -757,8 +769,14 @@ class LevelManager {
         if (this.engine.playerPosition && !this.levelCompleted) {
             const playerX = offsetX + this.engine.playerPosition.x * tileSize;
             const playerY = offsetY + this.engine.playerPosition.y * tileSize;
-            const frame = this.isMoving ? 'move' : 'idle';
-            this.engine.pixelSprites.drawSprite('player', playerX, playerY, tileSize, tileSize, frame);
+            
+            // Determine animation frame
+            const now = Date.now();
+            const frame = this.isMoving && (now - this.lastMoveTime < this.moveAnimationDelay) ? 'move' : 'idle';
+            
+            // Use currently equipped skin or default
+            const spriteName = this.engine.inventory.currentSkin || 'player';
+            this.engine.pixelSprites.drawSprite(spriteName.toLowerCase(), playerX, playerY, tileSize, tileSize, frame);
         }
 
         // Draw inventory

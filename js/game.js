@@ -12,7 +12,7 @@ class Game {
 
     initSprites() {
         // Cache all game sprites
-        const sprites = ['wall', 'floor', 'player', 'key', 'door', /* etc */];
+        const sprites = ['wall', 'floor', 'player', 'key', 'door','ninja' /* etc */];
         for (const sprite of sprites) {
             this.renderer.cacheSprite(sprite, this.sprites[sprite]);
         }
