@@ -166,6 +166,9 @@ class ShopManager {
         const startX = (this.engine.canvas.width - (itemWidth * itemsPerRow + 40 * (itemsPerRow - 1))) / 2;
         const startY = 150;
 
+        // Draw default skin button at top
+        this.drawDefaultSkinButton(20, 120, 120, 40);
+
         this.items.forEach((item, index) => {
             const row = Math.floor(index / itemsPerRow);
             const col = index % itemsPerRow;
@@ -203,14 +206,25 @@ class ShopManager {
             this.engine.ctx.fillStyle = '#FFD700';
             this.engine.ctx.fillText(`${item.price}`, x + itemWidth/2 + 20, y + itemHeight - 35);
 
-            // Show "Owned" instead of buy button for owned skins
+            // For skins, show equip button if owned
             if (item.category === "Skins" && 
                 this.engine.inventory.skins && 
                 this.engine.inventory.skins.includes(item.name)) {
-                this.engine.ctx.fillStyle = '#45a049';
-                this.engine.ctx.fillText('Owned', x + itemWidth/2, y + itemHeight - 10);
+                
+                const isEquipped = this.engine.inventory.currentSkin === item.name;
+                const buttonColor = isEquipped ? '#666666' : '#45a049';
+                const buttonText = isEquipped ? 'Equipped' : 'Equip';
+                
+                this.drawEquipButton(
+                    x + itemWidth/2 - 40, 
+                    y + itemHeight - 30, 
+                    80, 
+                    30, 
+                    buttonColor,
+                    buttonText
+                );
             } else {
-                // Draw buy button
+                // Draw regular buy button
                 this.drawBuyButton(x + itemWidth/2 - 40, y + itemHeight - 30, 80, 30, this.engine.getCoins() >= item.price);
             }
         });
@@ -268,6 +282,41 @@ class ShopManager {
         this.engine.ctx.restore();
     }
 
+    drawDefaultSkinButton(x, y, width, height) {
+        this.engine.ctx.save();
+        const isDefault = !this.engine.inventory.currentSkin;
+        const color = isDefault ? '#666666' : '#4a1a8c';
+        
+        this.engine.ctx.fillStyle = color;
+        this.engine.ctx.strokeStyle = '#333333';
+        this.engine.ctx.beginPath();
+        this.engine.ctx.roundRect(x, y, width, height, 5);
+        this.engine.ctx.fill();
+        this.engine.ctx.stroke();
+
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.font = '16px Arial';
+        this.engine.ctx.textAlign = 'center';
+        this.engine.ctx.fillText(isDefault ? 'Default (Equipped)' : 'Default Skin', x + width/2, y + height/2 + 5);
+        this.engine.ctx.restore();
+    }
+
+    drawEquipButton(x, y, width, height, color, text) {
+        this.engine.ctx.save();
+        this.engine.ctx.fillStyle = color;
+        this.engine.ctx.strokeStyle = '#333333';
+        this.engine.ctx.beginPath();
+        this.engine.ctx.roundRect(x, y, width, height, 5);
+        this.engine.ctx.fill();
+        this.engine.ctx.stroke();
+
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.font = '16px Arial';
+        this.engine.ctx.textAlign = 'center';
+        this.engine.ctx.fillText(text, x + width/2, y + height/2 + 5);
+        this.engine.ctx.restore();
+    }
+
     isMouseOverButton(x, y, width, height) {
         return this.engine.mousePos.x >= x && 
                this.engine.mousePos.x <= x + width &&
@@ -306,16 +355,8 @@ class ShopManager {
                 
                 // Add item to inventory based on category
                 if (item.category === "Skins") {
-                    if (!this.engine.inventory.skins) {
-                        this.engine.inventory.skins = [];
-                    }
-                    if (!this.engine.inventory.skins.includes(item.name)) {
-                        this.engine.inventory.skins.push(item.name);
-                    }
-                    // Set as current skin if none selected
-                    if (!this.engine.inventory.currentSkin) {
-                        this.engine.inventory.currentSkin = item.name;
-                    }
+                    this.engine.addSkin(item.name);
+                    this.engine.setCurrentSkin(item.name);
                 } else {
                     switch(item.name) {
                         case 'TNT':
@@ -401,6 +442,13 @@ class ShopManager {
     }
 
     handleClick(x, y) {
+        // Handle default skin button
+        if (x >= 20 && x <= 140 && y >= 120 && y <= 160) {
+            this.engine.inventory.currentSkin = null;
+            this.drawShop();
+            return;
+        }
+
         // Check back button click
         const buttonWidth = 100;
         const buttonHeight = 40;
@@ -436,21 +484,33 @@ class ShopManager {
         const startY = 150;
 
         this.items.forEach((item, index) => {
+            // Calculate item position
             const row = Math.floor(index / itemsPerRow);
             const col = index % itemsPerRow;
             const itemX = startX + col * (itemWidth + 40);
             const itemY = startY + row * (itemHeight + 20);
 
-            // Buy button dimensions and position
-            const buyButtonWidth = 80;
-            const buyButtonHeight = 30;
-            const buyButtonX = itemX + itemWidth/2 - 40;
-            const buyButtonY = itemY + itemHeight - 30;
+            // Buy/Equip button position
+            const buttonX = itemX + itemWidth/2 - 40;
+            const buttonY = itemY + itemHeight - 30;
+            const buttonWidth = 80;
+            const buttonHeight = 30;
 
-            if (x >= buyButtonX && x <= buyButtonX + buyButtonWidth &&
-                y >= buyButtonY && y <= buyButtonY + buyButtonHeight) {
-                // Try to buy or show "can't afford" message
-                this.buyItem(item);
+            if (x >= buttonX && x <= buttonX + buttonWidth &&
+                y >= buttonY && y <= buttonY + buttonHeight) {
+                
+                if (item.category === "Skins" && 
+                    this.engine.inventory.skins && 
+                    this.engine.inventory.skins.includes(item.name)) {
+                    // Handle equip
+                    this.engine.setCurrentSkin(
+                        this.engine.inventory.currentSkin === item.name ? null : item.name
+                    );
+                    this.drawShop();
+                } else {
+                    // Handle buy
+                    this.buyItem(item);
+                }
             }
         });
     }

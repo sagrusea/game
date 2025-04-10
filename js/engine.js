@@ -12,7 +12,9 @@ class GameEngine {
             blueKeys: 0,
             redKeys: 0,
             coins: 0,  // Global coins
-            levelCoins: 0  // Coins collected in current level
+            levelCoins: 0,  // Coins collected in current level
+            skins: this.loadSavedSkins(),
+            currentSkin: localStorage.getItem('currentSkin')
         };
         this.setFullscreen();
         this.audio = new AudioManager();
@@ -106,6 +108,17 @@ class GameEngine {
         
         // Start the game loop
         requestAnimationFrame((timestamp) => this.gameLoop(timestamp));
+
+        // Add console command listener
+        window.giveMoney = (amount) => {
+            const coins = parseInt(amount);
+            if (isNaN(coins)) {
+                console.log('Invalid amount');
+                return;
+            }
+            this.addCoins(coins);
+            return this.inventory.coins;
+        };
     }
 
     async loadSprites() {
@@ -123,6 +136,7 @@ class GameEngine {
                 this.pixelSprites.loadSprite('./assets/sprites/coin.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/hazards.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/shopkeeper.ass'),
+                this.pixelSprites.loadSprite('./assets/sprites/tnt.ass'),
                 this.pixelSprites.loadSprite('./assets/sprites/Collectibles.ass')
             ]);
             console.log('Sprites loaded successfully');
@@ -193,8 +207,10 @@ class GameEngine {
     }
 
     resetGameState() {
-        // Preserve only global coins
+        // Preserve global coins and skin data
         const currentCoins = this.inventory.coins;
+        const currentSkins = this.inventory.skins || [];
+        const equippedSkin = this.inventory.currentSkin;
         
         // Reset inventory and session
         this.inventory = {
@@ -202,7 +218,9 @@ class GameEngine {
             blueKeys: 0,
             redKeys: 0,
             coins: currentCoins,
-            levelCoins: 0
+            levelCoins: 0,
+            skins: currentSkins,
+            currentSkin: equippedSkin
         };
         this.levelSession = null;
 
@@ -263,9 +281,16 @@ class GameEngine {
     }
 
     drawPlayer() {
-        const playerX = this.playerPosition.x * 32; // Assuming 32x32 tiles
+        const playerX = this.playerPosition.x * 32;
         const playerY = this.playerPosition.y * 32;
-        this.pixelSprites.drawSprite('player', playerX, playerY, 32, 32); // Use 'player' as the sprite name
+        
+        // Check if skin exists before using it
+        const spriteName = this.inventory.currentSkin && 
+                          this.inventory.skins.includes(this.inventory.currentSkin) ? 
+                          this.inventory.currentSkin.toLowerCase() : 'player';
+        
+        const state = 'idle';
+        this.pixelSprites.drawSprite(spriteName, playerX, playerY, 32, 32, state);
     }
 
     toggleFPS() {
@@ -420,7 +445,6 @@ class GameEngine {
 
         if (this.gameState === 'shop' && this.levelManager) { // Add safety check
             this.clear();
-            this.levelManager.drawLevel(); // FPS is drawn inside drawLevel
             this.drawFPS(); // Make sure FPS is drawn last
             if (this.isShopOpen) {
                 this.shopManager.drawShop();
@@ -602,5 +626,45 @@ class GameEngine {
 
     markLevelCompleted(levelName) {
         this.completedLevels.add(levelName);
+    }
+
+    addCoins(amount) {
+        if (!this.inventory.coins) {
+            this.inventory.coins = 0;
+        }
+        this.inventory.coins += amount;
+        // Save coins immediately
+        this.coinManager.saveCoins(this.inventory.coins);
+        // Force menu redraw to show new amount
+        if (this.menuManager) {
+            this.menuManager.drawMenu();
+        }
+    }
+
+    loadSavedSkins() {
+        try {
+            const savedSkins = localStorage.getItem('ownedSkins');
+            return savedSkins ? JSON.parse(savedSkins) : [];
+        } catch (error) {
+            console.error('Error loading saved skins:', error);
+            return [];
+        }
+    }
+
+    saveSkins() {
+        localStorage.setItem('ownedSkins', JSON.stringify(this.inventory.skins));
+        localStorage.setItem('currentSkin', this.inventory.currentSkin || '');
+    }
+
+    setCurrentSkin(skinName) {
+        this.inventory.currentSkin = skinName;
+        this.saveSkins();
+    }
+
+    addSkin(skinName) {
+        if (!this.inventory.skins.includes(skinName)) {
+            this.inventory.skins.push(skinName);
+            this.saveSkins();
+        }
     }
 }

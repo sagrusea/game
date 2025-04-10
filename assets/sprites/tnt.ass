@@ -1,21 +1,25 @@
 sprite "tnt" {
-    size: 8x8
+    size: 12x12
     colors {
-        R: #FF0000
-        D: #AA0000
-        W: #FFFFFF
-        B: #000000
+        A: #C2C2C2
+        B: #D50000
+        C: #111010
+        D: #000000
     }
     frames {
         idle {
-            R R R R R R R R
-            R W W R R W W R
-            R W W R R W W R
-            R R R R R R R R
-            R D D R R D D R
-            R D D R R D D R
-            R R R R R R R R
-            B B B B B B B B
+            B B B B B B B B B B B B
+            B B B B B B B B B B B B
+            A A A A A A A A A A A A
+            A A A A A A A A A A A A
+            D D D A C C A C A D D D
+            A D A A C C C C A A C A
+            A D A A C A C C A A C A
+            A D A A C A A C A A C A
+            A A A A A A A A A A A A
+            A A A A A A A A A A A A
+            B B B B B B B B B B B B
+            B B B B B B B B B B B B
         }
     }
 }
