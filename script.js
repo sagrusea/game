@@ -1,6 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const engine = new GameEngine(canvas);
-engine.loadSavedCoins(); // Add this line after engine initialization
+engine.loadSavedCoins();
+engine.loadPurchasedLevels(); // Add this line to load purchased levels
 const levelManager = new LevelManager(engine);
 const menuManager = new MenuManager(engine);
 

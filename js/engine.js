@@ -749,4 +749,22 @@ class GameEngine {
             document.getElementById('optionsOverlay').style.display = 'none';
         }
     }
+
+    savePurchasedLevels() {
+        localStorage.setItem('purchasedLevels', JSON.stringify(this.inventory.purchasedLevels || []));
+    }
+
+    loadPurchasedLevels() {
+        try {
+            const savedLevels = localStorage.getItem('purchasedLevels');
+            if (savedLevels) {
+                this.inventory.purchasedLevels = JSON.parse(savedLevels);
+            } else {
+                this.inventory.purchasedLevels = [];
+            }
+        } catch (error) {
+            console.error('Error loading saved levels:', error);
+            this.inventory.purchasedLevels = [];
+        }
+    }
 }

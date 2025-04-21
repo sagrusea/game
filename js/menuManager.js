@@ -173,6 +173,7 @@ class MenuManager {
         this.framesSinceStateChange = 0;
         this.stateChangeTime = Date.now();
         this.lastDrawnState = null; // Force redraw
+        this.hideTooltip(); // Hide tooltip on any state change
     }
 
     update(deltaTime) {
@@ -766,6 +767,9 @@ class MenuManager {
     }
 
     handleStartPageClick(x, y) {
+        // Hide tooltip when clicking anywhere
+        this.hideTooltip();
+
         // Check back button first
         if (this.isMouseOver(
             this.engine.canvas.width / 2,
@@ -807,11 +811,12 @@ class MenuManager {
                             this.engine.inventory.purchasedLevels = [];
                         }
                         this.engine.inventory.purchasedLevels.push(levelId);
-                        this.engine.saveProgress();
+                        this.engine.savePurchasedLevels(); // Save after purchase
+                        return;
                     }
-                    return;
                 }
                 
+                this.hideTooltip(); // Ensure tooltip is hidden when loading level
                 this.engine.setState('playing');
                 this.levelManager.loadLevel(levelId);
             }
@@ -849,5 +854,13 @@ class MenuManager {
                mousePos.x <= bounds.x + bounds.width &&
                mousePos.y >= bounds.y && 
                mousePos.y <= bounds.y + bounds.height;
+    }
+
+    hideTooltip() {
+        const tooltip = document.getElementById('levelTooltip');
+        if (tooltip) {
+            tooltip.style.opacity = '0';
+            tooltip.innerHTML = '';
+        }
     }
 }
