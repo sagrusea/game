@@ -140,6 +140,7 @@ class GameEngine {
     async loadSprites() {
         const loadingProgress = document.getElementById('loadingProgress');
         let loaded = 0;
+        let displayProgress = 0;
         
         try {
             const sprites = [
@@ -148,23 +149,38 @@ class GameEngine {
                 'shopkeeper', 'tnt', 'Collectibles', 'potions'
             ];
 
+            // Reserve last 10% for initialization
+            const loadingWeight = 0.9; // 90% for asset loading
+            
             for (const sprite of sprites) {
                 await this.pixelSprites.loadSprite(`./assets/sprites/${sprite}.ass`);
                 loaded++;
-                loadingProgress.style.width = `${(loaded / this.totalAssets) * 100}%`;
+                // Calculate actual progress up to 90%
+                const actualProgress = (loaded / sprites.length) * loadingWeight * 100;
+                
+                // Smoothly update display progress
+                const smoothUpdate = setInterval(() => {
+                    if (displayProgress < actualProgress) {
+                        displayProgress += 0.5;
+                        loadingProgress.style.width = `${displayProgress}%`;
+                    } else {
+                        clearInterval(smoothUpdate);
+                    }
+                }, 16);
             }
 
-            // Calculate remaining time to meet minimum duration
-            const elapsed = Date.now() - this.loadStartTime;
-            const remaining = Math.max(0, this.MIN_LOADING_TIME - elapsed);
-            
-            // Wait for remaining time if needed
-            if (remaining > 0) {
-                await new Promise(resolve => setTimeout(resolve, remaining));
-            }
+            // Finish loading with remaining 10%
+            const finalSmoothing = setInterval(() => {
+                if (displayProgress < 100) {
+                    displayProgress += 0.2;
+                    loadingProgress.style.width = `${displayProgress}%`;
+                } else {
+                    clearInterval(finalSmoothing);
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    this.isLoading = false;
+                }
+            }, 16);
 
-            document.getElementById('loadingScreen').style.display = 'none';
-            this.isLoading = false;
         } catch (error) {
             console.error('Failed to load sprites:', error);
         }
@@ -766,5 +782,36 @@ class GameEngine {
             console.error('Error loading saved levels:', error);
             this.inventory.purchasedLevels = [];
         }
+    }
+
+    saveUnlockedChapters() {
+        localStorage.setItem('unlockedChapters', JSON.stringify(this.inventory.unlockedChapters || []));
+    }
+
+    loadUnlockedChapters() {
+        try {
+            const savedChapters = localStorage.getItem('unlockedChapters');
+            if (savedChapters) {
+                this.inventory.unlockedChapters = JSON.parse(savedChapters);
+            } else {
+                this.inventory.unlockedChapters = ['Chapter 1']; // First chapter always unlocked
+            }
+        } catch (error) {
+            console.error('Error loading saved chapters:', error);
+            this.inventory.unlockedChapters = ['Chapter 1'];
+        }
+    }
+
+    unlockChapter(chapterName, cost) {
+        if (this.spendCoins(cost)) {
+            this.inventory.unlockedChapters.push(chapterName);
+            this.saveUnlockedChapters();
+            return true;
+        }
+        return false;
+    }
+
+    isChapterUnlocked(chapterName) {
+        return this.inventory.unlockedChapters?.includes(chapterName);
     }
 }

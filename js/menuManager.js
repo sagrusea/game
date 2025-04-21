@@ -69,10 +69,10 @@ class MenuManager {
             level15: 5000   // Add more levels as needed
         };
         this.chapters = {
-            'Chapter 1': { startLevel: 1, endLevel: 15, color: '#4a9f4a' },
-            'Chapter 2': { startLevel: 16, endLevel: 30, color: '#9f4a4a' },
-            'Chapter 3': { startLevel: 31, endLevel: 45, color: '#4a4a9f' },
-            'Chapter 4': { startLevel: 46, endLevel: 50, color: '#9f9f4a' }
+            'Chapter 1': { startLevel: 1, endLevel: 15, color: '#4a9f4a', cost: 0 },
+            'Chapter 2': { startLevel: 16, endLevel: 30, color: '#9f4a4a', cost: 5000 },
+            'Chapter 3': { startLevel: 31, endLevel: 45, color: '#4a4a9f', cost: 15000 },
+            'Chapter 4': { startLevel: 46, endLevel: 50, color: '#9f9f4a', cost: 30000 }
         };
         this.currentChapter = 'Chapter 1';
         this.chapterTransition = 0;
@@ -547,34 +547,41 @@ class MenuManager {
         Object.entries(this.chapters).forEach(([name, data], i) => {
             const x = startX + i * spacing;
             const isSelected = name === this.currentChapter;
-            this.drawChapterButton(x, y, name, data.color, isSelected);
+            this.drawChapterButton(x, y, name, data, isSelected);
         });
     }
 
-    drawChapterButton(x, y, name, color, isSelected) {
+    drawChapterButton(x, y, name, chapter, isSelected) {
         const width = 180;
         const height = 60;
         const hover = this.isMouseOver(x, y, width, height);
+        const isUnlocked = this.engine.isChapterUnlocked(name);
         
         this.engine.ctx.save();
-        if (isSelected) {
-            this.engine.ctx.shadowColor = color;
+        if (isSelected && isUnlocked) {
+            this.engine.ctx.shadowColor = chapter.color;
             this.engine.ctx.shadowBlur = 20;
         }
         
         // Draw button background
         const gradient = this.engine.ctx.createLinearGradient(x - width/2, y, x + width/2, y);
-        gradient.addColorStop(0, `${color}88`);
-        gradient.addColorStop(1, `${color}44`);
+        gradient.addColorStop(0, isUnlocked ? `${chapter.color}88` : '#44444488');
+        gradient.addColorStop(1, isUnlocked ? `${chapter.color}44` : '#44444444');
         
         this.engine.ctx.fillStyle = gradient;
         this.engine.drawRect(x - width/2, y - height/2, width, height);
         
         // Draw text
-        this.engine.ctx.fillStyle = hover || isSelected ? '#ffffff' : '#bbbbbb';
+        this.engine.ctx.fillStyle = hover && isUnlocked ? '#ffffff' : '#bbbbbb';
         this.engine.ctx.font = 'bold 24px Arial';
         this.engine.ctx.textAlign = 'center';
-        this.engine.ctx.fillText(name, x, y + 8);
+        this.engine.ctx.fillText(name, x, y - 8);
+
+        // Draw cost for locked chapters
+        if (!isUnlocked) {
+            this.engine.ctx.font = '16px Arial';
+            this.engine.ctx.fillText(`${chapter.cost} coins`, x, y + 16);
+        }
         
         this.engine.ctx.restore();
     }
@@ -747,10 +754,17 @@ class MenuManager {
         const spacing = 200;
         const startX = this.engine.canvas.width / 2 - (Object.keys(this.chapters).length - 1) * spacing / 2;
 
-        Object.keys(this.chapters).forEach((name, i) => {
+        Object.entries(this.chapters).forEach(([name, chapter], i) => {
             const buttonX = startX + i * spacing;
             if (this.isMouseOver(buttonX, chapterY, 180, 60)) {
-                this.currentChapter = name;
+                if (this.engine.isChapterUnlocked(name)) {
+                    this.currentChapter = name;
+                } else if (this.engine.unlockChapter(name, chapter.cost)) {
+                    this.currentChapter = name;
+                    this.engine.audio.playSoundEffect('unlock');
+                } else {
+                    this.engine.audio.playSoundEffect('error');
+                }
                 return;
             }
         });
