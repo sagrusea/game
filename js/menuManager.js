@@ -49,17 +49,33 @@ class MenuManager {
         this.loadSettings();
         this.initOptionsOverlay();
         this.currentLevelPage = 0;
-        this.levelsPerPage = 9;
-        this.totalLevels = 50;
+        this.levelsPerPage = 15; // Increased from 9 to 15
+        this.totalLevels = 50;  // Increased total levels
         this.levelCosts = {
-            // First level is free
-            level1: 0,
-            level2: 100,
+            level1: 0,      // First level free
+            level2: 100,    // Beginner levels
             level3: 200,
             level4: 300,
             level5: 500,
-            // Add costs for more levels
+            level6: 750,    // Intermediate levels
+            level7: 1000,
+            level8: 1250,
+            level9: 1500,
+            level10: 2000,  // Advanced levels
+            level11: 2500,
+            level12: 3000,
+            level13: 3500,
+            level14: 4000,
+            level15: 5000   // Add more levels as needed
         };
+        this.chapters = {
+            'Chapter 1': { startLevel: 1, endLevel: 15, color: '#4a9f4a' },
+            'Chapter 2': { startLevel: 16, endLevel: 30, color: '#9f4a4a' },
+            'Chapter 3': { startLevel: 31, endLevel: 45, color: '#4a4a9f' },
+            'Chapter 4': { startLevel: 46, endLevel: 50, color: '#9f9f4a' }
+        };
+        this.currentChapter = 'Chapter 1';
+        this.chapterTransition = 0;
     }
 
     loadSettings() {
@@ -474,100 +490,44 @@ class MenuManager {
         console.log('Drawing start page');
         const time = Date.now() / 1000;
 
-        // Draw title
-        this.engine.ctx.shadowColor = `rgba(138, 43, 226, ${0.5 + Math.sin(time) * 0.2})`;
-        this.engine.ctx.shadowBlur = 15;
-        this.engine.drawText(
-            "Select Level",
-            this.engine.canvas.width / 2,
-            this.engine.canvas.height * 0.1,
-            this.engine.canvas.height * 0.08,
-            'white'
+        // Clear background
+        this.engine.ctx.fillStyle = '#1a1a1a';
+        this.engine.ctx.fillRect(0, 0, this.engine.canvas.width, this.engine.canvas.height);
+
+        // Draw chapter selection at the top
+        this.drawChapterSelector();
+
+        // Get current chapter levels
+        const chapter = this.chapters[this.currentChapter];
+        const levels = Array.from(
+            { length: chapter.endLevel - chapter.startLevel + 1 },
+            (_, i) => chapter.startLevel + i
         );
-        this.engine.ctx.shadowBlur = 0;
 
-        // Calculate path points for a winding path
-        const pathPoints = [];
-        const numLevels = Math.min(this.totalLevels, this.levelsPerPage);
-        const padding = 60;
-        const width = this.engine.canvas.width - padding * 2;
-        const height = this.engine.canvas.height - padding * 2;
-        
-        for(let i = 0; i < numLevels; i++) {
-            const progress = i / (numLevels - 1);
-            const x = padding + width * (0.1 + 0.8 * (i % 2 === 0 ? progress : (1 - progress)));
-            const y = padding + height * 0.2 + (height * 0.5 * progress);
-            pathPoints.push({x, y});
-        }
+        // Layout calculations
+        const columns = 5;
+        const rows = Math.ceil(levels.length / columns);
+        const cardWidth = 120;
+        const cardHeight = 120;
+        const spacingX = cardWidth + 40;
+        const spacingY = cardHeight + 40;
 
-        // Draw connecting paths
-        this.engine.ctx.beginPath();
-        this.engine.ctx.strokeStyle = 'rgba(138, 43, 226, 0.3)';
-        this.engine.ctx.lineWidth = 4;
-        pathPoints.forEach((point, i) => {
-            if (i === 0) {
-                this.engine.ctx.moveTo(point.x, point.y);
-            } else {
-                const prevPoint = pathPoints[i - 1];
-                const cp1x = prevPoint.x + (point.x - prevPoint.x) * 0.5;
-                const cp1y = prevPoint.y;
-                const cp2x = prevPoint.x + (point.x - prevPoint.x) * 0.5;
-                const cp2y = point.y;
-                this.engine.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, point.x, point.y);
-            }
-        });
-        this.engine.ctx.stroke();
+        // Calculate start position to center the grid
+        const startX = (this.engine.canvas.width - (columns - 1) * spacingX) / 2;
+        const startY = 150; // Below chapter selector
 
-        // Draw level nodes
-        pathPoints.forEach((point, i) => {
-            const levelNum = this.currentLevelPage * this.levelsPerPage + i + 1;
-            const levelId = `level${levelNum}`;
+        // Draw level cards
+        levels.forEach((level, i) => {
+            const row = Math.floor(i / columns);
+            const col = i % columns;
+            const x = startX + col * spacingX;
+            const y = startY + row * spacingY;
+            
+            const levelId = `level${level}`;
             const cost = this.levelCosts[levelId] || 0;
             const isPurchased = this.engine.inventory.purchasedLevels?.includes(levelId) || cost === 0;
-            const canAfford = this.engine.inventory.coins >= cost;
             
-            // Update tooltip content
-            const tooltip = document.getElementById('levelTooltip');
-            if (this.isNodeHovered(point.x, point.y)) {
-                tooltip.style.opacity = '1';
-                tooltip.style.left = `${point.x + 20}px`;
-                tooltip.style.top = `${point.y}px`;
-                
-                if (!isPurchased) {
-                    tooltip.innerHTML = `
-                        <div>Level ${levelNum}</div>
-                        <div>Cost: ${cost} coins</div>
-                        ${canAfford ? '<div class="tooltip-purchase">Click to purchase</div>' : '<div class="tooltip-locked">Not enough coins</div>'}
-                    `;
-                } else {
-                    tooltip.innerHTML = `<div>Level ${levelNum}</div><div>Click to play</div>`;
-                }
-            }
-
-            // Draw node background
-            this.engine.ctx.beginPath();
-            this.engine.ctx.fillStyle = isPurchased ? (isPurchased ? '#4CAF50' : '#8a2be2') : '#666';
-            this.engine.ctx.strokeStyle = isPurchased ? (isPurchased ? '#45a049' : '#4a1a8c') : '#444';
-            this.engine.ctx.lineWidth = 3;
-            this.engine.ctx.arc(point.x, point.y, 25, 0, Math.PI * 2);
-            this.engine.ctx.fill();
-            this.engine.ctx.stroke();
-
-            // Draw level number
-            this.engine.ctx.fillStyle = '#fff';
-            this.engine.ctx.font = '20px Arial';
-            this.engine.ctx.textAlign = 'center';
-            this.engine.ctx.textBaseline = 'middle';
-            this.engine.ctx.fillText(levelNum.toString(), point.x, point.y);
-            
-            // Draw hover effect
-            if (this.isMouseOver(point.x, point.y, 50, 50) && !isPurchased) {
-                this.engine.ctx.beginPath();
-                this.engine.ctx.arc(point.x, point.y, 30, 0, Math.PI * 2);
-                this.engine.ctx.strokeStyle = '#fff';
-                this.engine.ctx.lineWidth = 2;
-                this.engine.ctx.stroke();
-            }
+            this.drawLevelCard(x, y, level, cardWidth, cardHeight, chapter.color, isPurchased);
         });
 
         // Back button at bottom
@@ -579,60 +539,75 @@ class MenuManager {
         );
     }
 
-    drawLevelCard(x, y, levelNum, width, height) {
+    drawChapterSelector() {
+        const y = 50;
+        const spacing = 200;
+        const startX = this.engine.canvas.width / 2 - (Object.keys(this.chapters).length - 1) * spacing / 2;
+
+        Object.entries(this.chapters).forEach(([name, data], i) => {
+            const x = startX + i * spacing;
+            const isSelected = name === this.currentChapter;
+            this.drawChapterButton(x, y, name, data.color, isSelected);
+        });
+    }
+
+    drawChapterButton(x, y, name, color, isSelected) {
+        const width = 180;
+        const height = 60;
+        const hover = this.isMouseOver(x, y, width, height);
+        
+        this.engine.ctx.save();
+        if (isSelected) {
+            this.engine.ctx.shadowColor = color;
+            this.engine.ctx.shadowBlur = 20;
+        }
+        
+        // Draw button background
+        const gradient = this.engine.ctx.createLinearGradient(x - width/2, y, x + width/2, y);
+        gradient.addColorStop(0, `${color}88`);
+        gradient.addColorStop(1, `${color}44`);
+        
+        this.engine.ctx.fillStyle = gradient;
+        this.engine.drawRect(x - width/2, y - height/2, width, height);
+        
+        // Draw text
+        this.engine.ctx.fillStyle = hover || isSelected ? '#ffffff' : '#bbbbbb';
+        this.engine.ctx.font = 'bold 24px Arial';
+        this.engine.ctx.textAlign = 'center';
+        this.engine.ctx.fillText(name, x, y + 8);
+        
+        this.engine.ctx.restore();
+    }
+
+    drawLevelCard(x, y, levelNum, width, height, color, isPurchased) {
         const time = Date.now() / 1000;
         const hover = this.isMouseOver(x, y, width, height);
         const floatOffset = Math.sin(time * 2 + levelNum) * 5;
-        const scale = hover ? 1.1 : 1.0;
+
+        // Card and text colors
+        const bgColor = isPurchased ? color : '#444444';
+        const textColor = isPurchased ? '#ffffff' : '#888888';
 
         // Draw card shadow
         this.engine.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        this.engine.drawRect(
-            x - (width * scale) / 2 + 5,
-            y - (height * scale) / 2 + 5 + floatOffset,
-            width * scale,
-            height * scale
-        );
+        this.engine.ctx.fillRect(x - width/2 + 5, y - height/2 + floatOffset + 5, width, height);
 
-        // Card background
-        const gradient = this.engine.ctx.createLinearGradient(
-            x - width/2, y - height/2,
-            x + width/2, y + height/2
-        );
-        gradient.addColorStop(0, hover ? '#8a2be2' : '#4a1a8c');
-        gradient.addColorStop(1, hover ? '#9a3cf2' : '#6a2a9c');
-        
-        this.engine.ctx.fillStyle = gradient;
-        this.engine.drawRect(
-            x - (width * scale) / 2,
-            y - (height * scale) / 2 + floatOffset,
-            width * scale,
-            height * scale
-        );
+        // Draw card background
+        this.engine.ctx.fillStyle = bgColor;
+        this.engine.ctx.fillRect(x - width/2, y - height/2 + floatOffset, width, height);
 
-        // Card border
-        this.engine.ctx.strokeStyle = hover ? '#fff' : '#b66dff';
-        this.engine.ctx.lineWidth = hover ? 3 : 2;
-        this.engine.ctx.strokeRect(
-            x - (width * scale) / 2,
-            y - (height * scale) / 2 + floatOffset,
-            width * scale,
-            height * scale
-        );
+        // Draw level number
+        this.engine.ctx.fillStyle = textColor;
+        this.engine.ctx.font = 'bold 32px Arial';
+        this.engine.ctx.textAlign = 'center';
+        this.engine.ctx.fillText(`${levelNum}`, x, y + 10 + floatOffset);
 
-        // Level number
-        if (hover) {
-            this.engine.ctx.shadowColor = '#8a2be2';
-            this.engine.ctx.shadowBlur = 20;
+        // Draw cost if not purchased
+        if (!isPurchased) {
+            const cost = this.levelCosts[`level${levelNum}`] || 0;
+            this.engine.ctx.font = '20px Arial';
+            this.engine.ctx.fillText(`${cost} coins`, x, y + 40 + floatOffset);
         }
-        this.engine.drawText(
-            `Level ${levelNum}`,
-            x,
-            y + floatOffset,
-            this.engine.canvas.height * (hover ? 0.05 : 0.04),
-            'white'
-        );
-        this.engine.ctx.shadowBlur = 0;
     }
 
     drawLevelPreview(x, y, levelIndex) {
@@ -767,8 +742,46 @@ class MenuManager {
     }
 
     handleStartPageClick(x, y) {
-        // Hide tooltip when clicking anywhere
-        this.hideTooltip();
+        // Handle chapter selection
+        const chapterY = 50;
+        const spacing = 200;
+        const startX = this.engine.canvas.width / 2 - (Object.keys(this.chapters).length - 1) * spacing / 2;
+
+        Object.keys(this.chapters).forEach((name, i) => {
+            const buttonX = startX + i * spacing;
+            if (this.isMouseOver(buttonX, chapterY, 180, 60)) {
+                this.currentChapter = name;
+                return;
+            }
+        });
+
+        // Handle level selection
+        const chapter = this.chapters[this.currentChapter];
+        const levels = Array.from(
+            { length: chapter.endLevel - chapter.startLevel + 1 },
+            (_, i) => chapter.startLevel + i
+        );
+
+        // Use same layout calculations as in drawStartPage
+        const columns = 5;
+        const cardWidth = 120;
+        const cardHeight = 120;
+        const spacingX = cardWidth + 40;
+        const spacingY = cardHeight + 40;
+        const startLevelX = (this.engine.canvas.width - (columns - 1) * spacingX) / 2;
+        const startLevelY = 150;
+
+        levels.forEach((level, i) => {
+            const row = Math.floor(i / columns);
+            const col = i % columns;
+            const levelX = startLevelX + col * spacingX;
+            const levelY = startLevelY + row * spacingY;
+
+            if (this.isMouseOver(levelX, levelY, cardWidth, cardHeight)) {
+                const levelId = `level${level}`;
+                this.handleLevelClick(levelId);
+            }
+        });
 
         // Check back button first
         if (this.isMouseOver(
@@ -780,46 +793,25 @@ class MenuManager {
             this.engine.setState('menu');
             return;
         }
+    }
 
-        // Calculate level node positions
-        const numLevels = Math.min(this.totalLevels, this.levelsPerPage);
-        const padding = 60;
-        const width = this.engine.canvas.width - padding * 2;
-        const height = this.engine.canvas.height - padding * 2;
-        
-        // Check each level node
-        for(let i = 0; i < numLevels; i++) {
-            const progress = i / (numLevels - 1);
-            const nodeX = padding + width * (0.1 + 0.8 * (i % 2 === 0 ? progress : (1 - progress)));
-            const nodeY = padding + height * 0.2 + (height * 0.5 * progress);
-            
-            // Use larger hitbox for better click detection
-            const nodeRadius = 30;
-            const dx = x - nodeX;
-            const dy = y - nodeY;
-            
-            if (dx * dx + dy * dy < nodeRadius * nodeRadius) {
-                const levelNum = this.currentLevelPage * this.levelsPerPage + i + 1;
-                const levelId = `level${levelNum}`;
-                const cost = this.levelCosts[levelId] || 0;
-                const isPurchased = this.engine.inventory.purchasedLevels?.includes(levelId) || cost === 0;
-                
-                if (!isPurchased) {
-                    if (this.engine.inventory.coins >= cost) {
-                        this.engine.inventory.coins -= cost;
-                        if (!this.engine.inventory.purchasedLevels) {
-                            this.engine.inventory.purchasedLevels = [];
-                        }
-                        this.engine.inventory.purchasedLevels.push(levelId);
-                        this.engine.savePurchasedLevels(); // Save after purchase
-                        return;
-                    }
-                }
-                
-                this.hideTooltip(); // Ensure tooltip is hidden when loading level
-                this.engine.setState('playing');
-                this.levelManager.loadLevel(levelId);
+    handleLevelClick(levelId) {
+        const cost = this.levelCosts[levelId] || 0;
+        const isPurchased = this.engine.inventory.purchasedLevels?.includes(levelId) || cost === 0;
+
+        if (!isPurchased && this.engine.inventory.coins >= cost) {
+            this.engine.inventory.coins -= cost;
+            if (!this.engine.inventory.purchasedLevels) {
+                this.engine.inventory.purchasedLevels = [];
             }
+            this.engine.inventory.purchasedLevels.push(levelId);
+            this.engine.savePurchasedLevels();
+            return;
+        }
+
+        if (isPurchased) {
+            this.engine.setState('playing');
+            this.levelManager.loadLevel(levelId);
         }
     }
 
