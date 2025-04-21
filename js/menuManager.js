@@ -51,6 +51,15 @@ class MenuManager {
         this.currentLevelPage = 0;
         this.levelsPerPage = 9;
         this.totalLevels = 50;
+        this.levelCosts = {
+            // First level is free
+            level1: 0,
+            level2: 100,
+            level3: 200,
+            level4: 300,
+            level5: 500,
+            // Add costs for more levels
+        };
     }
 
     loadSettings() {
@@ -464,72 +473,103 @@ class MenuManager {
         console.log('Drawing start page');
         const time = Date.now() / 1000;
 
-        // Draw animated title with glow
+        // Draw title
         this.engine.ctx.shadowColor = `rgba(138, 43, 226, ${0.5 + Math.sin(time) * 0.2})`;
         this.engine.ctx.shadowBlur = 15;
         this.engine.drawText(
             "Select Level",
             this.engine.canvas.width / 2,
-            this.engine.canvas.height * 0.1, // Moved up to 10% from top
+            this.engine.canvas.height * 0.1,
             this.engine.canvas.height * 0.08,
             'white'
         );
         this.engine.ctx.shadowBlur = 0;
 
-        // Draw level grid (3x3) - Moved down to create space from title
-        const startLevel = this.currentLevelPage * this.levelsPerPage;
-        const gridSize = 3;
-        const padding = 20;
-        const cardWidth = 180;
-        const cardHeight = 200;
-        const startX = this.engine.canvas.width / 2 - (cardWidth + padding) * (gridSize / 2 - 0.5);
-        const startY = this.engine.canvas.height * 0.2; // Moved down to 20% from top
+        // Calculate path points for a winding path
+        const pathPoints = [];
+        const numLevels = Math.min(this.totalLevels, this.levelsPerPage);
+        const padding = 60;
+        const width = this.engine.canvas.width - padding * 2;
+        const height = this.engine.canvas.height - padding * 2;
+        
+        for(let i = 0; i < numLevels; i++) {
+            const progress = i / (numLevels - 1);
+            const x = padding + width * (0.1 + 0.8 * (i % 2 === 0 ? progress : (1 - progress)));
+            const y = padding + height * 0.2 + (height * 0.5 * progress);
+            pathPoints.push({x, y});
+        }
 
-        for(let row = 0; row < gridSize; row++) {
-            for(let col = 0; col < gridSize; col++) {
-                const levelNum = startLevel + row * gridSize + col + 1;
-                if(levelNum <= this.totalLevels) {
-                    const x = startX + col * (cardWidth + padding);
-                    const y = startY + row * (cardHeight + padding);
-                    this.drawLevelCard(x, y, levelNum, cardWidth, cardHeight);
+        // Draw connecting paths
+        this.engine.ctx.beginPath();
+        this.engine.ctx.strokeStyle = 'rgba(138, 43, 226, 0.3)';
+        this.engine.ctx.lineWidth = 4;
+        pathPoints.forEach((point, i) => {
+            if (i === 0) {
+                this.engine.ctx.moveTo(point.x, point.y);
+            } else {
+                const prevPoint = pathPoints[i - 1];
+                const cp1x = prevPoint.x + (point.x - prevPoint.x) * 0.5;
+                const cp1y = prevPoint.y;
+                const cp2x = prevPoint.x + (point.x - prevPoint.x) * 0.5;
+                const cp2y = point.y;
+                this.engine.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, point.x, point.y);
+            }
+        });
+        this.engine.ctx.stroke();
+
+        // Draw level nodes
+        pathPoints.forEach((point, i) => {
+            const levelNum = this.currentLevelPage * this.levelsPerPage + i + 1;
+            const levelId = `level${levelNum}`;
+            const cost = this.levelCosts[levelId] || 0;
+            const isPurchased = this.engine.inventory.purchasedLevels?.includes(levelId) || cost === 0;
+            const canAfford = this.engine.inventory.coins >= cost;
+            
+            // Update tooltip content
+            const tooltip = document.getElementById('levelTooltip');
+            if (this.isNodeHovered(point.x, point.y)) {
+                tooltip.style.opacity = '1';
+                tooltip.style.left = `${point.x + 20}px`;
+                tooltip.style.top = `${point.y}px`;
+                
+                if (!isPurchased) {
+                    tooltip.innerHTML = `
+                        <div>Level ${levelNum}</div>
+                        <div>Cost: ${cost} coins</div>
+                        ${canAfford ? '<div class="tooltip-purchase">Click to purchase</div>' : '<div class="tooltip-locked">Not enough coins</div>'}
+                    `;
+                } else {
+                    tooltip.innerHTML = `<div>Level ${levelNum}</div><div>Click to play</div>`;
                 }
             }
-        }
 
-        // Draw pagination controls
-        const totalPages = Math.ceil(this.totalLevels / this.levelsPerPage);
-        const paginationY = this.engine.canvas.height * 0.85;
-        
-        // Previous page button
-        if(this.currentLevelPage > 0) {
-            this.drawButton(
-                "←",
-                this.engine.canvas.width * 0.3,
-                paginationY,
-                this.engine.canvas.height * 0.05
-            );
-        }
+            // Draw node background
+            this.engine.ctx.beginPath();
+            this.engine.ctx.fillStyle = isPurchased ? (isPurchased ? '#4CAF50' : '#8a2be2') : '#666';
+            this.engine.ctx.strokeStyle = isPurchased ? (isPurchased ? '#45a049' : '#4a1a8c') : '#444';
+            this.engine.ctx.lineWidth = 3;
+            this.engine.ctx.arc(point.x, point.y, 25, 0, Math.PI * 2);
+            this.engine.ctx.fill();
+            this.engine.ctx.stroke();
 
-        // Page indicator
-        this.engine.drawText(
-            `Page ${this.currentLevelPage + 1}/${totalPages}`,
-            this.engine.canvas.width * 0.5,
-            paginationY,
-            this.engine.canvas.height * 0.04,
-            'white'
-        );
+            // Draw level number
+            this.engine.ctx.fillStyle = '#fff';
+            this.engine.ctx.font = '20px Arial';
+            this.engine.ctx.textAlign = 'center';
+            this.engine.ctx.textBaseline = 'middle';
+            this.engine.ctx.fillText(levelNum.toString(), point.x, point.y);
+            
+            // Draw hover effect
+            if (this.isMouseOver(point.x, point.y, 50, 50) && !isPurchased) {
+                this.engine.ctx.beginPath();
+                this.engine.ctx.arc(point.x, point.y, 30, 0, Math.PI * 2);
+                this.engine.ctx.strokeStyle = '#fff';
+                this.engine.ctx.lineWidth = 2;
+                this.engine.ctx.stroke();
+            }
+        });
 
-        // Next page button
-        if(this.currentLevelPage < totalPages - 1) {
-            this.drawButton(
-                "→",
-                this.engine.canvas.width * 0.7,
-                paginationY,
-                this.engine.canvas.height * 0.05
-            );
-        }
-
-        // Back button
+        // Back button at bottom
         this.drawButton(
             "Back",
             this.engine.canvas.width / 2,
@@ -726,65 +766,71 @@ class MenuManager {
     }
 
     handleStartPageClick(x, y) {
-        const gridSize = 3;
-        const padding = 20;
-        const cardWidth = 180;
-        const cardHeight = 200;
-        const startX = this.engine.canvas.width / 2 - (cardWidth + padding) * (gridSize / 2 - 0.5);
-        const startY = this.engine.canvas.height * 0.25;
-
-        // Check level card clicks
-        for(let row = 0; row < gridSize; row++) {
-            for(let col = 0; col < gridSize; col++) {
-                const levelNum = this.currentLevelPage * this.levelsPerPage + row * gridSize + col + 1;
-                if(levelNum <= this.totalLevels) {
-                    const cardX = startX + col * (cardWidth + padding);
-                    const cardY = startY + row * (cardHeight + padding);
-                    if(this.isMouseOver(cardX, cardY, cardWidth, cardHeight)) {
-                        this.levelManager.loadLevel(`level${levelNum}`);
-                        this.engine.gameState = 'playing';
-                        return;
-                    }
-                }
-            }
-        }
-
-        // Check pagination clicks
-        const paginationY = this.engine.canvas.height * 0.85;
-        const totalPages = Math.ceil(this.totalLevels / this.levelsPerPage);
-
-        // Previous page
-        if(this.currentLevelPage > 0 && this.isMouseOver(
-            this.engine.canvas.width * 0.3,
-            paginationY,
-            60,
-            this.engine.canvas.height * 0.05
-        )) {
-            this.currentLevelPage--;
-            return;
-        }
-
-        // Next page
-        if(this.currentLevelPage < totalPages - 1 && this.isMouseOver(
-            this.engine.canvas.width * 0.7,
-            paginationY,
-            60,
-            this.engine.canvas.height * 0.05
-        )) {
-            this.currentLevelPage++;
-            return;
-        }
-
-        // Back button
-        if(this.isMouseOver(
+        // Check back button first
+        if (this.isMouseOver(
             this.engine.canvas.width / 2,
             this.engine.canvas.height * 0.92,
             200,
             this.engine.canvas.height * 0.04
         )) {
-            this.currentLevelPage = 0; // Reset page when going back
             this.engine.setState('menu');
+            return;
         }
+
+        // Calculate level node positions
+        const numLevels = Math.min(this.totalLevels, this.levelsPerPage);
+        const padding = 60;
+        const width = this.engine.canvas.width - padding * 2;
+        const height = this.engine.canvas.height - padding * 2;
+        
+        // Check each level node
+        for(let i = 0; i < numLevels; i++) {
+            const progress = i / (numLevels - 1);
+            const nodeX = padding + width * (0.1 + 0.8 * (i % 2 === 0 ? progress : (1 - progress)));
+            const nodeY = padding + height * 0.2 + (height * 0.5 * progress);
+            
+            // Use larger hitbox for better click detection
+            const nodeRadius = 30;
+            const dx = x - nodeX;
+            const dy = y - nodeY;
+            
+            if (dx * dx + dy * dy < nodeRadius * nodeRadius) {
+                const levelNum = this.currentLevelPage * this.levelsPerPage + i + 1;
+                const levelId = `level${levelNum}`;
+                const cost = this.levelCosts[levelId] || 0;
+                const isPurchased = this.engine.inventory.purchasedLevels?.includes(levelId) || cost === 0;
+                
+                if (!isPurchased) {
+                    if (this.engine.inventory.coins >= cost) {
+                        this.engine.inventory.coins -= cost;
+                        if (!this.engine.inventory.purchasedLevels) {
+                            this.engine.inventory.purchasedLevels = [];
+                        }
+                        this.engine.inventory.purchasedLevels.push(levelId);
+                        this.engine.saveProgress();
+                    }
+                    return;
+                }
+                
+                this.engine.setState('playing');
+                this.levelManager.loadLevel(levelId);
+            }
+        }
+    }
+
+    // Add helper method for node hit detection
+    isNodeClicked(x, y, nodeX, nodeY, radius = 30) {
+        const dx = x - nodeX;
+        const dy = y - nodeY;
+        return dx * dx + dy * dy < radius * radius;
+    }
+
+    isNodeHovered(nodeX, nodeY) {
+        const mouseX = this.engine.mousePos.x;
+        const mouseY = this.engine.mousePos.y;
+        const dx = mouseX - nodeX;
+        const dy = mouseY - nodeY;
+        return dx * dx + dy * dy < 900; // 30px radius squared
     }
 
     isButtonClicked(x, y, buttonY) {
