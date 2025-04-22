@@ -96,6 +96,15 @@ class GameEngine {
         }, { once: true });
 
         canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (this.levelManager?.failureShowing) {
+                this.levelManager.handleFailureClick(x, y);
+                return;
+            }
+
             if (this.isShopOpen) {
                 const rect = canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -465,16 +474,23 @@ class GameEngine {
     }
 
     damage() {
-        if (this.currentHealth <= 0) return; // Prevent damage when already dead
+        if (this.currentHealth <= 0) return; // Already dead
         
         this.currentHealth--;
         console.log('Health after damage:', this.currentHealth);
         
         if (this.currentHealth <= 0) {
             this.currentHealth = 0; // Ensure health doesn't go below 0
+            // Immediately trigger failure screen and stop player movement
             if (this.levelManager) {
                 this.levelManager.showFailure();
                 this.audio.synthesizer.playSoundEffect('failure');
+                
+                // Force level state to completed to prevent further movement/damage
+                this.levelManager.levelCompleted = true;
+                
+                // Clear any in-progress key states to prevent movement
+                this.keys = {};
             }
         } else {
             this.audio.synthesizer.playSoundEffect('collision');

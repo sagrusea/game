@@ -110,6 +110,11 @@ class LevelManager {
         this.moveAnimationDelay = 150; // Time in ms between frame changes
         this.finishAnimationTime = 0;
         this.finishAnimationInterval = 800; // Time in ms between frame changes
+        this.failurePenalty = 50; // Coins lost on failure
+        this.failureButtons = [
+            { text: 'Retry Level', action: 'retry' },
+            { text: 'Return to Menu', action: 'menu' }
+        ];
     }
 
     async loadLevels() {
@@ -635,10 +640,11 @@ class LevelManager {
         const customFloor = this.customFloors.get(pos);
         layers.push(customFloor || 'floor');
 
-        // Add spikes if present
+        // Add spikes if present with correct frame based on state
         const spikeState = this.spikes.get(pos);
         if (spikeState) {
-            layers.push('spikes'); // Just push the sprite name, frame handled by getTileFrame
+            const frame = spikeState.extended ? 'extended' : 'idle';
+            layers.push(['spikes', frame]); // Use array format to specify frame
         }
 
         // Rest of layer handling
@@ -853,6 +859,45 @@ class LevelManager {
             this.engine.canvas.height - padding - iconSize/2
         );
         this.engine.ctx.restore();
+
+        // Draw failure screen if active
+        if (this.failureShowing) {
+            const ctx = this.engine.ctx;
+            const centerX = this.engine.canvas.width / 2;
+            const centerY = this.engine.canvas.height / 2;
+            
+            // Draw semi-transparent red background
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, this.engine.canvas.width, this.engine.canvas.height);
+            
+            // Draw failure message
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw title
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 48px Arial';
+            ctx.fillText('You Failed!', centerX, centerY - 100);
+            
+            // Draw coin penalty
+            ctx.font = '24px Arial';
+            ctx.fillText(`-${this.failurePenalty} coins`, centerX, centerY - 40);
+            
+            // Draw buttons
+            this.failureButtons.forEach((button, index) => {
+                const buttonY = centerY + 40 + (index * 60);
+                const hover = this.isButtonHovered(centerX, buttonY);
+                
+                ctx.fillStyle = hover ? '#8a2be2' : '#4a1a8c';
+                ctx.fillRect(centerX - 100, buttonY - 20, 200, 40);
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(button.text, centerX, buttonY);
+            });
+            
+            ctx.restore();
+        }
     }
 
     isPlatePressed(x, y) {
@@ -899,6 +944,12 @@ class LevelManager {
         this.failureShowing = true;
         this.levelCompleted = true;
         
+        // Apply coin penalty
+        const currentCoins = this.engine.inventory.coins;
+        const penalty = Math.min(currentCoins, this.failurePenalty);
+        this.engine.inventory.coins -= penalty;
+        this.engine.coinManager.saveCoins(this.engine.inventory.coins);
+        
         // Stop player movement immediately
         this.engine.playerPosition = { ...this.engine.playerPosition };
         
@@ -930,5 +981,34 @@ class LevelManager {
             else if (coin.type === 'gold_coin') totalValue += 10;
         });
         return totalValue;
+    }
+
+    isButtonHovered(x, y) {
+        const mouseX = this.engine.mousePos.x;
+        const mouseY = this.engine.mousePos.y;
+        return mouseX >= x - 100 && mouseX <= x + 100 && 
+               mouseY >= y - 20 && mouseY <= y + 20;
+    }
+
+    handleFailureClick(x, y) {
+        if (!this.failureShowing) return;
+
+        const centerX = this.engine.canvas.width / 2;
+        this.failureButtons.forEach((button, index) => {
+            const buttonY = this.engine.canvas.height / 2 + 40 + (index * 60);
+            
+            if (this.isButtonHovered(centerX, buttonY)) {
+                if (button.action === 'retry') {
+                    this.failureShowing = false;
+                    this.levelCompleted = false;
+                    this.engine.currentHealth = this.engine.maxHealth;
+                    this.restartLevel();
+                } else if (button.action === 'menu') {
+                    this.failureShowing = false;
+                    this.levelCompleted = false;
+                    this.engine.setState('menu');
+                }
+            }
+        });
     }
 }
