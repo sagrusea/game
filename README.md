@@ -15,6 +15,9 @@ you can play it here: https://sagrusea.itch.io/escape-game
 - new skins?
 - better shop
 - more coming soon (maybe a story? who knows)
+- double xp and coin potions
+- skills
+- xp system?
 
 ## screens
 ![Snímek obrazovky 2025-04-09 225822](https://github.com/user-attachments/assets/287f4a0d-1d08-46ac-8ad8-19f2f8122252)
