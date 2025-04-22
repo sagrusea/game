@@ -292,66 +292,78 @@ class LevelManager {
         return { object: tile, floor: 'floor' };
     }
 
+    getFreshLevel(levelName) {
+        if (!this.levels[levelName]) {
+            console.error('Level not found:', levelName);
+            return null;
+        }
+        // Create a deep copy of the level data
+        return JSON.parse(JSON.stringify(this.levels[levelName]));
+    }
+
     loadLevel(levelName) {
-        console.log('Loading level:', levelName); // Debug log
-        if (this.levels[levelName]) {
-            this.currentLevel = this.levels[levelName];
-            this.inventory = { keys: 0, hasBlueKey: false, hasRedKey: false };
-            this.movableBlocks.clear();
-            this.spikes.clear();
-            this.collectibles = []; // Add this line
-            this.customFloors.clear();
-            // Reset health on new level
-            this.engine.currentHealth = this.engine.maxHealth;
-            
-            // Find starting position (first 'c' in the level)
-            for (let y = 0; y < this.currentLevel.length; y++) {
-                for (let x = 0; x < this.currentLevel[y].length; x++) {
-                    const tile = this.currentLevel[y][x];
-                    const { object, floor } = this.parseFloorNotation(tile);
-                    
-                    // Store custom floor if specified
-                    if (floor !== 'floor') {
-                        this.customFloors.set(`${x},${y}`, floor);
-                    }
+        console.log('Loading level:', levelName);
+        
+        // Get a fresh copy of the level data
+        const freshLevel = this.getFreshLevel(levelName);
+        if (!freshLevel) return;
 
-                    // Update the level array to only contain the object
-                    this.currentLevel[y][x] = object;
+        this.currentLevel = freshLevel;
+        this.inventory = { keys: 0, hasBlueKey: false, hasRedKey: false };
+        this.movableBlocks.clear();
+        this.spikes.clear();
+        this.collectibles = [];
+        this.customFloors.clear();
+        this.engine.currentHealth = this.engine.maxHealth;
+        
+        // Process level data
+        for (let y = 0; y < this.currentLevel.length; y++) {
+            for (let x = 0; x < this.currentLevel[y].length; x++) {
+                const tile = this.currentLevel[y][x];
+                const { object, floor } = this.parseFloorNotation(tile);
+                
+                // Store custom floor if specified
+                if (floor !== 'floor') {
+                    this.customFloors.set(`${x},${y}`, floor);
+                }
 
-                    // Process the object as before
-                    if (object === 'c') {
-                        this.engine.playerPosition = { x, y };
+                // Update the level array to only contain the object
+                this.currentLevel[y][x] = object;
+
+                // Process objects
+                if (object === 'c') {
+                    this.engine.playerPosition = { x, y };
+                    this.currentLevel[y][x] = '.';
+                } else if (object === 'b') {
+                    this.movableBlocks.set(`${x},${y}`, { x, y });
+                } else if (object === 'j') {
+                    this.spikes.set(`${x},${y}`, {
+                        extended: false,
+                        nextChange: Date.now() + Math.random() * 1500 + 1000
+                    });
+                }
+
+                // Handle collectibles
+                switch (object) {
+                    case 'C':
+                        this.placeCollectible('bronze_coin', x, y);
                         this.currentLevel[y][x] = '.';
-                    } else if (object === 'b') {
-                        this.movableBlocks.set(`${x},${y}`, { x, y });
-                    } else if (object === 'j') {
-                        this.spikes.set(`${x},${y}`, {
-                            extended: false,
-                            nextChange: Date.now() + Math.random() * 1500 + 1000
-                        });
-                    }
-                    switch (object) {
-                        case 'C': // bronze coin
-                            this.placeCollectible('bronze_coin', x, y);
-                            this.currentLevel[y][x] = '.'; // Replace with empty space after placing
-                            break;
-                        case 'V': // silver coin
-                            this.placeCollectible('silver_coin', x, y);
-                            this.currentLevel[y][x] = '.'; // Replace with empty space after placing
-                            break;
-                        case 'N': // gold coin
-                            this.placeCollectible('gold_coin', x, y);
-                            this.currentLevel[y][x] = '.'; // Replace with empty space after placing
-                            break;
-                    }
+                        break;
+                    case 'V':
+                        this.placeCollectible('silver_coin', x, y);
+                        this.currentLevel[y][x] = '.';
+                        break;
+                    case 'N':
+                        this.placeCollectible('gold_coin', x, y);
+                        this.currentLevel[y][x] = '.';
+                        break;
                 }
             }
-            this.currentLevelName = levelName;
-            console.log('Level loaded successfully');
-            this.engine.resetLevelCoins();
-        } else {
-            console.error('Level not found:', levelName);
         }
+
+        this.currentLevelName = levelName;
+        console.log('Level loaded successfully');
+        this.engine.resetLevelCoins();
     }
 
     placeCollectible(type, x, y) {
