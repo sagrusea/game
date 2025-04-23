@@ -48,6 +48,7 @@ class GameEngine {
         this.totalAssets = 14; // Total number of assets to load
         this.MIN_LOADING_TIME = 1000; // Minimum loading screen time in ms
         this.loadStartTime = Date.now();
+        this.menuManager = null;  // Add this line if not already present
         
         // Initialize LevelManager
         this.levelManager = new LevelManager(this);
@@ -147,6 +148,17 @@ class GameEngine {
 
         // Add reset progress handler
         document.getElementById('resetProgress').onclick = () => this.resetProgress();
+
+        // Add console commands
+        window.giveMoney = (amount) => {
+            this.addCoins(amount);
+            console.log(`%cCheated ${amount} coins!`, 'color: #FFD700; font-weight: bold;');
+        };
+        
+        window.giveShards = (amount) => {
+            this.addShards(amount);
+            console.log(`%cCheated ${amount} shards!`, 'color: #6EB5FF; font-weight: bold;');
+        };
     }
 
     async loadSprites() {
@@ -237,6 +249,13 @@ class GameEngine {
         if (this.validStates.includes(newState)) {
             const oldState = this.gameState;
             this.gameState = newState;
+            
+            // Handle music state changes
+            if (newState === 'playing') {
+                this.audio.startLevelMusic();
+            } else if (newState === 'menu' || newState === 'start' || newState === 'shop') {
+                this.audio.stopLevelMusic();
+            }
             
             if (oldState === 'shop') {
                 this.isShopOpen = false;
@@ -393,18 +412,20 @@ class GameEngine {
         }
     }
 
-    toggleShop() {
+    async toggleShop() {
+        const wasShopOpen = this.isShopOpen;
         this.isShopOpen = !this.isShopOpen;
+        
         if (this.isShopOpen) {
-            // Don't create a new level manager if we're just opening the shop
+            await this.audio.startShopMusic();
             this.shopManager.showMessage('entrance');
-            console.error(!this.shopManager.categories || this.shopManager.categories.length === 0);
             if (!this.shopManager.categories || this.shopManager.categories.length === 0) {
                 console.error('No shop categories found!');
                 this.shopManager.loadShopItems();
             }
+        } else if (wasShopOpen) {
+            await this.audio.stopShopMusic();
         }
-        // Don't change state when closing shop
     }
 
     addKey(color) {
@@ -884,5 +905,10 @@ class GameEngine {
             return true;
         }
         return false;
+    }
+
+    // Add setter for menuManager if not exists
+    setMenuManager(menuManager) {
+        this.menuManager = menuManager;
     }
 }

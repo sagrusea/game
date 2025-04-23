@@ -77,8 +77,10 @@ class MenuManager {
         this.currentChapter = 'Chapter 1';
         this.chapterTransition = 0;
         this.buttonWidth = 200; // Increased from default
-        this.buttonHeight = 50; // Increased from default
-        this.version = 'A5_1.1';
+        this.buttonHeight = 60; // Increased from default
+        this.version = 'A5_2';
+        this.potionEndTime = 0;
+        this.potionMultiplier = 1;
     }
 
     loadSettings() {
@@ -322,6 +324,21 @@ class MenuManager {
             padding + verticalSpacing + (iconSize / 2)
         );
 
+        // Draw potion timer if active
+        if (this.potionEndTime > Date.now()) {
+            const timeLeft = Math.ceil((this.potionEndTime - Date.now()) / 1000);
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            
+            this.engine.ctx.fillStyle = '#FFD700';
+            this.engine.ctx.font = '16px Arial';
+            this.engine.ctx.fillText(
+                `2x Coins: ${minutes}:${seconds.toString().padStart(2, '0')}`,
+                padding + iconSize + spacing,
+                padding + verticalSpacing + iconSize + 20
+            );
+        }
+        
         this.engine.ctx.restore();
     }
 
@@ -939,5 +956,11 @@ class MenuManager {
             tooltip.style.opacity = '0';
             tooltip.innerHTML = '';
         }
+    }
+
+    // Add method to activate potion
+    activatePotion(duration) {
+        this.potionEndTime = Date.now() + (duration * 60 * 1000); // Convert minutes to ms
+        this.potionMultiplier = 2;
     }
 }

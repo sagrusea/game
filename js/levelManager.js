@@ -106,7 +106,9 @@ class LevelManager {
         };
         this.floorTypes = {
             'I': 'plank_floor',
+            'i': 'plank_floor', // Add lowercase variant
             'S': 'stone_floor',
+            's': 'stone_floor', // Add lowercase variant
             '.': 'floor'  // Default floor type
             // Add more floor type mappings here
         };
@@ -120,6 +122,24 @@ class LevelManager {
             { text: 'Retry Level', action: 'retry' },
             { text: 'Return to Menu', action: 'menu' }
         ];
+        this.blockTypes = {
+            '#': 'wall',
+            'B': 'block',
+            'R': 'rusty_box',    // Add new box types
+            'M': 'metal_box',
+            'C': 'crate',        // Decorative crate
+            // ...existing block types...
+        };
+
+        this.doorTypes = {
+            'D': 'door_normal',
+            'L': 'door_blue',
+            'U': 'door_rusty',   // Add new door types
+            'T': 'door_metal',
+            // ...existing door types...
+        };
+        this.blocks = []; // Add this line to initialize blocks array
+        this.doors = []; // Add this line to initialize doors array
     }
 
     async loadLevels() {
@@ -257,6 +277,30 @@ class LevelManager {
         document.getElementById('coinsCollected').textContent = 
             `Coins value collected: ${totalValue}`;
 
+        // Add random shard rewards
+        const shardRoll = Math.random();
+        let shardReward = 0;
+
+        if (shardRoll > 0.99) {         // 1% chance for 100 shards
+            shardReward = 100;
+        } else if (shardRoll > 0.95) {  // 4% chance for 50 shards
+            shardReward = 50;
+        } else if (shardRoll > 0.85) {  // 10% chance for 25 shards
+            shardReward = 25;
+        } else if (shardRoll > 0.70) {  // 15% chance for 10 shards
+            shardReward = 10;
+        } else if (shardRoll > 0.60) {  // 10% chance for 5 shards
+            shardReward = 5;
+        }
+
+        if (shardReward > 0) {
+            this.engine.addShards(shardReward);
+            // Update shard reward display
+            document.getElementById('shardsCollected').textContent = 
+                `Lucky! You found ${shardReward} shards!`;
+            document.getElementById('shardsCollected').style.display = 'block';
+        }
+
         this.engine.markLevelCompleted(this.currentLevelName);
     }
 
@@ -324,37 +368,39 @@ class LevelManager {
         this.spikes.clear();
         this.collectibles = [];
         this.customFloors.clear();
+        this.blocks = []; // Clear blocks array
+        this.doors = []; // Clear doors array
         this.engine.currentHealth = this.engine.maxHealth;
         
         // Process level data
         for (let y = 0; y < this.currentLevel.length; y++) {
             for (let x = 0; x < this.currentLevel[y].length; x++) {
-                const tile = this.currentLevel[y][x];
-                const { object, floor } = this.parseFloorNotation(tile);
+                let tile = this.currentLevel[y][x];
                 
-                // Store custom floor if specified
-                if (floor !== 'floor') {
-                    this.customFloors.set(`${x},${y}`, floor);
+                // Handle floor notation with pipe
+                if (tile.includes('|')) {
+                    const [object, floorCode] = tile.split('|');
+                    const floorType = this.floorTypes[floorCode] || 'floor';
+                    this.customFloors.set(`${x},${y}`, floorType);
+                    tile = object || '.';
+                    this.currentLevel[y][x] = tile;
                 }
 
-                // Update the level array to only contain the object
-                this.currentLevel[y][x] = object;
-
                 // Process objects
-                if (object === 'c') {
+                if (tile === 'c') {
                     this.engine.playerPosition = { x, y };
                     this.currentLevel[y][x] = '.';
-                } else if (object === 'b') {
+                } else if (tile === 'b') {
                     this.movableBlocks.set(`${x},${y}`, { x, y });
-                } else if (object === 'j') {
+                } else if (tile === 'j') {
                     this.spikes.set(`${x},${y}`, {
                         extended: false,
                         nextChange: Date.now() + Math.random() * 1500 + 1000
                     });
                 }
 
-                // Handle collectibles
-                switch (object) {
+                // Handle collectibles and special blocks
+                switch (tile) {
                     case 'C':
                         this.placeCollectible('bronze_coin', x, y);
                         this.currentLevel[y][x] = '.';
@@ -367,9 +413,24 @@ class LevelManager {
                         this.placeCollectible('gold_coin', x, y);
                         this.currentLevel[y][x] = '.';
                         break;
-                    case 'H': // Add shard handling
+                    case 'H':
                         this.placeCollectible('shard', x, y);
                         this.currentLevel[y][x] = '.';
+                        break;
+                    case 'R':
+                        this.blocks.push({ type: 'rusty_box', x, y, pushable: true });
+                        break;
+                    case 'M':
+                        this.blocks.push({ type: 'metal_box', x, y, pushable: true });
+                        break;
+                    case 'C':
+                        this.blocks.push({ type: 'crate', x, y, pushable: false });
+                        break;
+                    case 'U':
+                        this.doors.push({ type: 'door_rusty', x, y, color: 'rusty' });
+                        break;
+                    case 'T':
+                        this.doors.push({ type: 'door_metal', x, y, color: 'metal' });
                         break;
                 }
             }
@@ -402,21 +463,18 @@ class LevelManager {
                     this.engine.addShards(item.value);
                     return false;
                 } else if (item.type.includes('coin')) {
-                    // Play coin sound
                     this.engine.audio.playSoundEffect('coin');
-                    
-                    // Add to level coins count
                     this.engine.inventory.levelCoins++;
                     
-                    // Add to global coins based on coin type value
-                    if (item.type === 'bronze_coin') {
-                        this.engine.inventory.coins += 1;
-                    } else if (item.type === 'silver_coin') {
-                        this.engine.inventory.coins += 5;
-                    } else if (item.type === 'gold_coin') {
-                        this.engine.inventory.coins += 10;
-                    }
+                    // Safely access potionMultiplier with default value of 1
+                    const multiplier = this.engine.menuManager?.potionMultiplier || 1;
+                    let coinValue = 0;
                     
+                    if (item.type === 'bronze_coin') coinValue = 1;
+                    else if (item.type === 'silver_coin') coinValue = 5;
+                    else if (item.type === 'gold_coin') coinValue = 10;
+                    
+                    this.engine.inventory.coins += coinValue * multiplier;
                     return false;
                 }
             }
@@ -1015,5 +1073,14 @@ class LevelManager {
                 }
             }
         });
+    }
+
+    checkBoxMatch(box, door) {
+        if (!box || !door) return false;
+        return (
+            (box.type === 'block' && door.type === 'door_normal') ||
+            (box.type === 'rusty_box' && door.type === 'door_rusty') ||
+            (box.type === 'metal_box' && door.type === 'door_metal')
+        );
     }
 }

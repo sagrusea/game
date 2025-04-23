@@ -159,3 +159,133 @@ sprite "speed_potion_big" {
         }
     }
 }
+sprite "coin_potion" {
+    size: 8x8
+    colors {
+        A: #6D360F
+        B: #F0F0F0
+        C: #FFFFFF
+        D: #DDAD15
+        E: #884313
+        F: #E1E1E1
+        G: #C19712
+        H: #C3C3C3
+        I: #CFA214
+        J: #52290B
+        K: #D2D2D2
+        L: #977610
+        M: #EDC750
+        N: #EABB26
+        O: #B38C10
+        P: #896B0E
+    }
+    frames {
+        idle {
+            . . . J E . . .
+            . . A A E A . .
+            . . K A A C . .
+            . . F G L C . .
+            . H I M D I B .
+            . F N D O D B .
+            . . H G P C . .
+            . . . B B . . .
+        }
+        empty {
+            . . . G D . . .
+            . . A A D A . .
+            . . E A A C . .
+            . . F . . C . .
+            . H . . . . B .
+            . F . . . . B .
+            . . E . . C . .
+            . . . B B . . .
+        }
+    }
+}
+sprite "coin_potion_big" {
+    size: 8x8
+    colors {
+        A: #FFFFFF
+        B: #DDAD15
+        C: #C19713
+        D: #6D360F
+        E: #D2D2D2
+        F: #E9B718
+        G: #EABB26
+        H: #F0F0F0
+        I: #884313
+        J: #CFA214
+        K: #ECC342
+        L: #E1E1E1
+        M: #A35017
+        N: #B4B4B4
+        O: #B38C11
+        P: #C3C3C3
+        Q: #ECBF33
+        R: #7B600D
+        S: #D6D6D6
+    }
+    frames {
+        idle {
+            . . D I M D . .
+            . . E I D A . .
+            . N O F G G A .
+            H C C G F J B H
+            P K Q C C J B A
+            E J C C F R B A
+            . S K O C B L .
+            . . L E L H . .
+        }
+        empty {
+            . . C E G C . .
+            . . A E C B . .
+            . H . . . . B .
+            D . . . . . . D
+            I . . . . . . B
+            A . . . . . . B
+            . J . . . . F .
+            . . F A A D . .
+        }
+    }
+}
+sprite "coin_potion_chug" {
+    size: 8x8
+    colors {
+        A: #392200
+        B: #C19712
+        C: #A5810F
+        D: #583400
+        E: #896B0C
+        F: #774600
+        G: #62615B
+        H: #DDAD15
+        I: #EABB26
+        J: #423E3A
+        K: #42413D
+        L: #52514C
+        M: #828179
+        N: #673D00
+    }
+    frames {
+        idle {
+            . . . . . . . .
+            . . B H C C . .
+            . A E B I B F .
+            . G J K L G M .
+            . A E B B C D .
+            . D D C C A A .
+            . . N F A D . .
+            . . . . . . . .
+        }
+        empty {
+            . . . . . . . .
+            . . . . . . . .
+            . A . . . . C .
+            . D E F G D H .
+            . A . . . . B .
+            . B B . . A A .
+            . . I C A B . .
+            . . . . . . . .
+        }
+    }
+}

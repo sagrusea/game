@@ -6,15 +6,19 @@ class AudioManager {
         this.isMuted = false;
         this.initialized = false;
         this.currentTrack = 0;
+        this.musicState = 'menu'; // Add music state tracking
         this.tracks = [
-            'assets/sound/music/bg_1.ass',
-            'assets/sound/music/bg_2.ass',
-            'assets/sound/music/bg_3.ass'
+            'assets/sound/music/menu.mp3',
+            'assets/sound/music/Dungeons_whispers.mp3',
+            'assets/sound/music/Travelers_tune.mp3'  // Add shop music track
         ];
+        this.audioElement = new Audio();
+        this.audioElement.loop = true;
         this.volume = 1.0;
         this.sfxEnabled = true;
         this.currentSequenceTimeout = null; // Add this line to track the current sequence timeout
         this.sfxVolume = 1.0;
+        this.musicEnabled = true; // Add new state flag
     }
 
     async init() {
@@ -26,58 +30,38 @@ class AudioManager {
     }
 
     async loadBackgroundMusic() {
-        this.track = await this.synthesizer.loadTrack(this.tracks[this.currentTrack]);
+        this.audioElement.src = this.tracks[this.currentTrack];
+        this.audioElement.volume = this.volume;
         await this.synthesizer.loadSoundEffects('assets/sound/sfx/effects.ass');
     }
 
     async playBackgroundMusic() {
-        if (!this.initialized) {
-            await this.init();
+        if (!this.initialized || !this.musicEnabled) {
+            return;
         }
-        if (!this.track || this.isPlaying) return;
+        if (this.isPlaying) return;
         
         this.isPlaying = true;
-        const beatDuration = 60 / this.track.tempo;
-
-        const playSequence = async (index = 0) => {
-            if (!this.isPlaying || this.isMuted) return;
-
-            const event = this.track.sequence[index];
-            if (event.type === 'note' || event.type === 'bass') {
-                this.synthesizer.playNote(event.note, event.duration * beatDuration);
-            } else if (event.type === 'drum') {
-                this.synthesizer.playDrum(event.drumType, event.duration * beatDuration);
-            }
-
-            // Store the timeout so we can clear it later
-            this.currentSequenceTimeout = setTimeout(() => {
-                playSequence((index + 1) % this.track.sequence.length);
-            }, event.duration * beatDuration * 1000);
-        };
-
-        playSequence();
+        this.audioElement.play();
     }
 
     stopBackgroundMusic() {
         this.isPlaying = false;
-        // Clear the current sequence timeout
-        if (this.currentSequenceTimeout) {
-            clearTimeout(this.currentSequenceTimeout);
-            this.currentSequenceTimeout = null;
-        }
+        this.audioElement.pause();
     }
 
     toggleMute() {
-        this.isMuted = !this.isMuted;
-        if (this.isMuted) {
+        this.musicEnabled = !this.musicEnabled;
+        if (!this.musicEnabled) {
             this.stopBackgroundMusic();
-        } else {
+        } else if (!this.isLevelMusic) { // Only restart if it's menu music
             this.playBackgroundMusic();
         }
     }
 
     setVolume(volume) {
         this.volume = volume;
+        this.audioElement.volume = volume;
         this.synthesizer.setVolume(volume);
     }
 
@@ -96,16 +80,44 @@ class AudioManager {
     }
 
     async nextTrack() {
-        // Stop current track completely
         this.stopBackgroundMusic();
-        
-        // Switch to next track
         this.currentTrack = (this.currentTrack + 1) % this.tracks.length;
         await this.loadBackgroundMusic();
-        
-        // Start new track if we were playing before
         if (!this.isMuted) {
             this.playBackgroundMusic();
+        }
+    }
+
+    stopLevelMusic() {
+        this.isLevelMusic = false;
+        if (this.musicEnabled) { // Only restart menu music if music is enabled
+            this.playBackgroundMusic();
+        }
+    }
+
+    startLevelMusic() {
+        this.isLevelMusic = true;
+        this.stopBackgroundMusic();
+    }
+
+    async startShopMusic() {
+        this.musicState = 'shop';
+        this.currentTrack = 2;
+        await this.switchMusic();
+    }
+
+    async stopShopMusic() {
+        this.musicState = 'menu';
+        this.currentTrack = 0;
+        await this.switchMusic();
+    }
+
+    async switchMusic() {
+        if (this.musicEnabled) {
+            this.stopBackgroundMusic();
+            await this.loadBackgroundMusic();
+            await this.audioElement.play().catch(err => console.log('Error playing music:', err));
+            this.isPlaying = true;
         }
     }
 }

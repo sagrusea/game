@@ -3,6 +3,9 @@
         {
             "name": "TNT",
             "price": 100,
+            "priceType": "coin",
+            "shopType": "C,R",
+            "rarity": 2,
             "category": "Items",
             "sprite": "tnt",
             "description": "Destroys walls"
@@ -10,6 +13,9 @@
         {
             "name": "Health Potion",
             "price": 50,
+            "priceType": "coin",
+            "shopType": "C",
+            "rarity": 1,
             "category": "Items", 
             "sprite": "health_potion",
             "description": "Restores 1 hp"
@@ -17,27 +23,69 @@
         {
             "name": "Health Potion Big",
             "price": 70,
+            "priceType": "coin",
+            "shopType": "R",
+            "rarity": 3,
             "category": "Items", 
             "sprite": "health_potion_big",
             "description": "Restores health to the max"
         },
         {
-            "name": "Speed Boost",
+            "name": "Speed Potion",
             "price": 60,
+            "priceType": "coin",
+            "shopType": "C",
+            "rarity": 2,
             "category": "Items",
             "sprite": "speed_potion",
             "description": "Temporary speed increase"
         },
         {
-            "name": "Speed Boost",
+            "name": "Speed Boost Big",
             "price": 100,
+            "priceType": "shard",
+            "shopType": "R",
+            "rarity": 4,
             "category": "Items",
             "sprite": "speed_potion_big",
             "description": "longer speed increase"
         },
         {
+            "name": "Coin Potion",
+            "price": 50,
+            "priceType": "shard",
+            "shopType": "C,R",
+            "rarity": 2,
+            "category": "Items",
+            "sprite": "coin_potion",
+            "description": "Doubles the coins you get for 2 minutes"
+        },
+        {
+            "name": "Coin Potion Big",
+            "price": 100,
+            "priceType": "shard",
+            "shopType": "C",
+            "rarity": 4,
+            "category": "Items",
+            "sprite": "coin_potion_big",
+            "description": "Doubles the coins you get for 5 minutes"
+        },
+        {
+            "name":"Coin Potion Chug",
+            "price": 150,
+            "priceType": "shard",
+            "shopType": "C",
+            "rarity": 5,
+            "category": "Items",
+            "sprite": "coin_potion_chug",
+            "description": "Doubles the coins you get for 13 minutes"
+        },
+        {
             "name": "Knight",
             "price": 500,
+            "priceType": "coin",
+            "shopType": "C",
+            "rarity": 5,
             "category": "Skins",
             "sprite": "knight",
             "description": "A noble warrior skin"
@@ -45,6 +93,9 @@
         {
             "name": "Ninja",
             "price": 750,
+            "priceType": "shard",
+            "shopType": "R",
+            "rarity": 5,
             "category": "Skins",
             "sprite": "ninja",
             "description": "A stealthy ninja skin"
@@ -52,6 +103,9 @@
         {
             "name": "Wizard",
             "price": 1000,
+            "priceType": "shard",
+            "shopType": "R",
+            "rarity": 6,
             "category": "Skins",
             "sprite": "wizard",
             "description": "A powerful mage skin"

@@ -25,7 +25,10 @@ class ShopManager {
         try {
             const response = await fetch('./assets/items/items.json');
             const data = await response.json();
-            this.items = data.items;
+            // Filter for items that include 'C' in their shopType
+            this.items = data.items.filter(item => 
+                item.shopType.split(',').includes('C')
+            );
             this.categories = [...new Set(this.items.map(item => item.category))];
             this.selectedCategory = this.categories[0];
             this.renderShop();
@@ -148,7 +151,7 @@ class ShopManager {
         this.engine.ctx.fillStyle = '#fff';
         this.engine.ctx.font = 'bold 32px Arial';
         this.engine.ctx.textAlign = 'center';
-        this.engine.ctx.fillText('Shop', this.engine.canvas.width / 2, 50);
+        this.engine.ctx.fillText('The Traveler’s Trove', this.engine.canvas.width / 2, 50);
         this.engine.ctx.restore();
 
         // Draw back button
@@ -213,10 +216,25 @@ class ShopManager {
                 const description = item.description || 'No description available';
                 this.wrapText(this.engine.ctx, description, x + itemWidth/2, y + 130, itemWidth - 20, 20);
 
-                // Draw price with  icon
-                this.engine.pixelSprites.drawSprite('coin', x + itemWidth/2 - 32, y + itemHeight - 50, 24, 24, 'idle');
-                this.engine.ctx.fillStyle = '#FFD700';
-                this.engine.ctx.fillText(`${item.price}`, x + itemWidth/2 + 20, y + itemHeight - 35);
+                // Draw price with correct currency icon and color
+                const currencySprite = item.priceType === 'shard' ? 'shard' : 'coin';
+                const priceColor = item.priceType === 'shard' ? '#6EB5FF' : '#FFD700';
+                
+                this.engine.pixelSprites.drawSprite(
+                    currencySprite, 
+                    x + itemWidth/2 - 32, 
+                    y + itemHeight - 50, 
+                    24, 
+                    24, 
+                    'idle'
+                );
+                
+                this.engine.ctx.fillStyle = priceColor;
+                this.engine.ctx.fillText(
+                    `${item.price}`, 
+                    x + itemWidth/2 + 20, 
+                    y + itemHeight - 35
+                );
 
                 // For skins, show equip button if owned
                 if (item.category === "Skins" && 
@@ -236,8 +254,12 @@ class ShopManager {
                         buttonText
                     );
                 } else {
-                    // Draw regular buy button
-                    this.drawBuyButton(x + itemWidth/2 - 40, y + itemHeight - 30, 80, 30, this.engine.getCoins() >= item.price);
+                    // Update buy button condition
+                    const canAfford = item.priceType === 'shard' ? 
+                        this.engine.getShards() >= item.price :
+                        this.engine.getCoins() >= item.price;
+                    
+                    this.drawBuyButton(x + itemWidth/2 - 40, y + itemHeight - 30, 80, 30, canAfford);
                 }
             });
 
@@ -487,8 +509,16 @@ class ShopManager {
         console.log('Current coins:', this.engine.getCoins());
         console.log('Item price:', item.price);
 
-        if (this.engine.getCoins() >= item.price) {
-            if (this.engine.spendCoins(item.price)) {
+        const currentBalance = item.priceType === 'shard' ? 
+            this.engine.getShards() : 
+            this.engine.getCoins();
+
+        if (currentBalance >= item.price) {
+            const success = item.priceType === 'shard' ?
+                this.engine.spendShards(item.price) :
+                this.engine.spendCoins(item.price);
+
+            if (success) {
                 console.log('Purchase successful');
                 
                 // Play purchase sound
@@ -598,7 +628,7 @@ class ShopManager {
         if (x >= this.engine.canvas.width - 120 && x <= this.engine.canvas.width - 20 &&
             y >= 20 && y <= 60) {
             this.engine.isShopOpen = false;
-            this.engine.setState('menu');
+            this.engine.setState('menu'); // This will now trigger proper music transition
             return;
         }
 

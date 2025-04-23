@@ -10,6 +10,8 @@ redisigned speed potion: small large + added chug version for all potions
 Double xp potion - 3 shards
 effect last for irl minutes based on potion scale small large chug : 2/5/10
 ///
+luck potion
+///
 New skins:
 King - shard price, comes with abilities
 Farmer - normal price
@@ -40,10 +42,21 @@ add grass and other variants
 *TBD = to be dicided
 
 Shard system - [x]
+Shard rewarding - [x]
+New potions + potion variant chug - []
+Shop rework - [Work]
+
 
 
 2 title screens
+settings for 
+music - x
+	in menus - _
+	in game - _
+sfx - x
 each level has diffrent music
 use shards to refresh shop, otherwise wait x minutes
 shard shop and an npc that you talk to(need to say some words or phrases to get awarded stuff 
 or unlock the secret shop, all words and phrases are hashed for sec)
+Shard special notation "H" for a shard but its combined with a number 1-6 6 rarest 1 most common
+	eg,. H1 spawns always, H6 spawn almost newer
