@@ -97,6 +97,11 @@ class LevelManager {
                 base: false,
                 requiresBase: ['floor'],
                 combinable: []
+            },
+            'shard': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
             }
         };
         this.floorTypes = {
@@ -362,6 +367,10 @@ class LevelManager {
                         this.placeCollectible('gold_coin', x, y);
                         this.currentLevel[y][x] = '.';
                         break;
+                    case 'H': // Add shard handling
+                        this.placeCollectible('shard', x, y);
+                        this.currentLevel[y][x] = '.';
+                        break;
                 }
             }
         }
@@ -378,7 +387,8 @@ class LevelManager {
             y: y,
             value: type === 'bronze_coin' ? 1 : 
                    type === 'silver_coin' ? 5 : 
-                   type === 'gold_coin' ? 10 : 1
+                   type === 'gold_coin' ? 10 :
+                   type === 'shard' ? 1 : 1
         };
         this.collectibles.push(collectible);
     }
@@ -386,22 +396,29 @@ class LevelManager {
     checkCollectibles(playerX, playerY) {
         this.collectibles = this.collectibles.filter(item => {
             if (item.x === playerX && item.y === playerY) {
-                // Play coin sound
-                this.engine.audio.playSoundEffect('coin');
-                
-                // Add to level coins count
-                this.engine.inventory.levelCoins++;
-                
-                // Add to global coins based on coin type value
-                if (item.type === 'bronze_coin') {
-                    this.engine.inventory.coins += 1;
-                } else if (item.type === 'silver_coin') {
-                    this.engine.inventory.coins += 5;
-                } else if (item.type === 'gold_coin') {
-                    this.engine.inventory.coins += 10;
+                if (item.type === 'shard') {
+                    this.engine.audio.playSoundEffect('shard_collect');
+                    this.engine.inventory.levelShards++;
+                    this.engine.addShards(item.value);
+                    return false;
+                } else if (item.type.includes('coin')) {
+                    // Play coin sound
+                    this.engine.audio.playSoundEffect('coin');
+                    
+                    // Add to level coins count
+                    this.engine.inventory.levelCoins++;
+                    
+                    // Add to global coins based on coin type value
+                    if (item.type === 'bronze_coin') {
+                        this.engine.inventory.coins += 1;
+                    } else if (item.type === 'silver_coin') {
+                        this.engine.inventory.coins += 5;
+                    } else if (item.type === 'gold_coin') {
+                        this.engine.inventory.coins += 10;
+                    }
+                    
+                    return false;
                 }
-                
-                return false;
             }
             return true;
         });
@@ -803,63 +820,6 @@ class LevelManager {
         // Draw health bar last so it's always on top
         this.drawHealthBar();
 
-        // Draw failure message if active
-        if (this.failureShowing) {
-            const ctx = this.engine.ctx;
-            const centerX = this.engine.canvas.width / 2;
-            const centerY = this.engine.canvas.height / 2;
-            
-            // Draw semi-transparent red background
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-            ctx.fillRect(0, 0, this.engine.canvas.width, this.engine.canvas.height);
-            
-            // Draw failure text
-            ctx.save();
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Draw text shadow
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.font = 'bold 52px Arial';
-            ctx.fillText('You Failed!', centerX + 2, centerY - 28);
-            ctx.font = '24px Arial';
-            ctx.fillText('Restarting level...', centerX + 2, centerY + 22);
-            
-            // Draw main text
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 52px Arial';
-            ctx.fillText('You Failed!', centerX, centerY - 30);
-            ctx.font = '24px Arial';
-            ctx.fillText('Restarting level...', centerX, centerY + 20);
-            
-            ctx.restore();
-        }
-
-        // Draw coin counter
-        const padding = 10;
-        const iconSize = 32;
-        const spacing = 10;
-
-        this.engine.ctx.save();
-        // Draw level coins
-        this.engine.pixelSprites.drawSprite('coin', 
-            padding, 
-            this.engine.canvas.height - padding - iconSize, 
-            iconSize, 
-            iconSize, 
-            'idle');
-        
-        this.engine.ctx.textAlign = 'left';
-        this.engine.ctx.textBaseline = 'middle';
-        this.engine.ctx.fillStyle = '#FFD700';
-        this.engine.ctx.font = 'bold 24px Arial';
-        this.engine.ctx.fillText(
-            `${this.calculateCurrentLevelValue()}`, // Changed from getLevelCoins
-            padding + iconSize + spacing,
-            this.engine.canvas.height - padding - iconSize/2
-        );
-        this.engine.ctx.restore();
-
         // Draw failure screen if active
         if (this.failureShowing) {
             const ctx = this.engine.ctx;
@@ -898,6 +858,51 @@ class LevelManager {
             
             ctx.restore();
         }
+
+        // Draw coin and shard counters
+        const padding = 10;
+        const iconSize = 32;
+        const spacing = 10;
+        const verticalSpacing = 40;
+
+        this.engine.ctx.save();
+        
+        // Draw coins at the bottom
+        this.engine.pixelSprites.drawSprite('coin', 
+            padding, 
+            this.engine.canvas.height - padding - iconSize, 
+            iconSize, 
+            iconSize, 
+            'idle'
+        );
+        
+        this.engine.ctx.textAlign = 'left';
+        this.engine.ctx.textBaseline = 'middle';
+        this.engine.ctx.fillStyle = '#FFD700';
+        this.engine.ctx.font = 'bold 24px Arial';
+        this.engine.ctx.fillText(
+            `${this.calculateCurrentLevelValue()}`,
+            padding + iconSize + spacing,
+            this.engine.canvas.height - padding - iconSize/2
+        );
+
+        // Draw shards above coins
+        this.engine.pixelSprites.drawSprite('shard', 
+            padding, 
+            this.engine.canvas.height - padding - iconSize - verticalSpacing, 
+            iconSize, 
+            iconSize, 
+            'idle'
+        );
+        
+        this.engine.ctx.fillStyle = '#6EB5FF';
+        this.engine.ctx.fillText(
+            `${this.engine.inventory.levelShards || 0}`,
+            padding + iconSize + spacing,
+            this.engine.canvas.height - padding - iconSize/2 - verticalSpacing
+        );
+
+        this.engine.ctx.restore();
     }
 
     isPlatePressed(x, y) {

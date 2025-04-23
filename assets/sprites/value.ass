@@ -1,0 +1,45 @@
+sprite "coin" {
+    size: 4x4
+    colors {
+        G: #FFC800
+        S: #FFED4A
+        A: #FFD700
+    }
+    frames {
+        idle {
+            G G G G
+            G S S G
+            G S S G
+            G G G G
+        }
+    }
+}
+sprite "shard" {
+    size: 8x8
+    colors {
+        A: #763C8C
+        B: #4C0467
+        C: #8845A1
+        D: #410358
+        E: #7806A1
+        F: #9547AD
+        G: #9F5AB9
+        H: #360248
+        I: #6D367F
+        J: #570474
+        K: #7F4096
+        L: #620584
+    }
+    frames {
+        idle {
+            . . . D B . . .
+            . . B A A B . .
+            . E C F G A B .
+            . H A C I A B .
+            . J C A K A B .
+            . J C A C A B .
+            . . L A A B . .
+            . . . D B . . .
+        }
+    }
+}

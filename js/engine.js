@@ -12,7 +12,9 @@ class GameEngine {
             blueKeys: 0,
             redKeys: 0,
             coins: 0,  // Global coins
+            shards: 0,  // Add shards
             levelCoins: 0,  // Coins collected in current level
+            levelShards: 0, // Add level shards
             skins: this.loadSavedSkins(),
             currentSkin: localStorage.getItem('currentSkin')
         };
@@ -51,8 +53,9 @@ class GameEngine {
         this.levelManager = new LevelManager(this);
         this.levelManager.collectibles = []; // Move it here after initialization
 
-        this.coinManager = new CoinManager();
+        this.coinManager = new CurrencyManager();
         this.inventory.coins = this.coinManager.loadCoins();
+        this.inventory.shards = this.coinManager.loadShards();
         
         window.addEventListener('resize', () => this.setFullscreen());
         
@@ -154,7 +157,7 @@ class GameEngine {
         try {
             const sprites = [
                 'player', 'items', 'Items', 'block', 'keys', 'walls',
-                'doors', 'floor', 'decorations', 'coin', 'hazards',
+                'doors', 'floor', 'decorations', 'value', 'hazards',
                 'shopkeeper', 'tnt', 'Collectibles', 'potions'
             ];
 
@@ -264,6 +267,7 @@ class GameEngine {
     resetGameState() {
         // Preserve global coins and skin data
         const currentCoins = this.inventory.coins;
+        const currentShards = this.inventory.shards;
         const currentSkins = this.inventory.skins || [];
         const equippedSkin = this.inventory.currentSkin;
         
@@ -273,7 +277,9 @@ class GameEngine {
             blueKeys: 0,
             redKeys: 0,
             coins: currentCoins,
+            shards: currentShards,
             levelCoins: 0,
+            levelShards: 0,
             skins: currentSkins,
             currentSkin: equippedSkin
         };
@@ -686,6 +692,22 @@ class GameEngine {
             padding + iconSize + spacing,
             this.canvas.height - padding - iconSize/2
         );
+
+        // Add shard counter next to coin counter
+        const shardX = padding + iconSize + spacing + 100; // Position after coin counter
+        this.pixelSprites.drawSprite('shard', 
+            shardX, 
+            padding, 
+            iconSize, 
+            iconSize, 
+            'idle');
+        
+        this.ctx.fillText(
+            `${this.inventory.shards}`,
+            shardX + iconSize + spacing,
+            padding + iconSize/2
+        );
+
         this.ctx.restore();
 
         // ...existing code...
@@ -829,5 +851,38 @@ class GameEngine {
 
     isChapterUnlocked(chapterName) {
         return this.inventory.unlockedChapters?.includes(chapterName);
+    }
+
+    // Add shard methods
+    getShards() {
+        return this.inventory.shards;
+    }
+
+    addShards(amount, animate = false) {
+        if (animate) {
+            let added = 0;
+            const interval = setInterval(() => {
+                if (added < amount) {
+                    this.inventory.shards++;
+                    this.audio.playSoundEffect('shard_collect');
+                    added++;
+                } else {
+                    clearInterval(interval);
+                    this.coinManager.saveShards(this.inventory.shards);
+                }
+            }, 100);
+        } else {
+            this.inventory.shards += amount;
+            this.coinManager.saveShards(this.inventory.shards);
+        }
+    }
+
+    spendShards(amount) {
+        if (this.inventory.shards >= amount) {
+            this.inventory.shards -= amount;
+            this.coinManager.saveShards(this.inventory.shards);
+            return true;
+        }
+        return false;
     }
 }

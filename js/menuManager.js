@@ -5,7 +5,7 @@ class MenuManager {
         this.canvas = engine.canvas;  // Get canvas from engine
         this.levelManager = null; // Will be set from script.js
         this.menuConfig = {
-            title: "Escape Game",
+            title: "Gauntlet of Keys",
             options: ["Start Game", "Instructions", "Options","Shop", "Exit"] // Added "Options"
         };
         this.sfxEnabled = true;
@@ -76,6 +76,9 @@ class MenuManager {
         };
         this.currentChapter = 'Chapter 1';
         this.chapterTransition = 0;
+        this.buttonWidth = 200; // Increased from default
+        this.buttonHeight = 50; // Increased from default
+        this.version = 'A5_1.1';
     }
 
     loadSettings() {
@@ -224,46 +227,15 @@ class MenuManager {
         }
     }
 
-    drawButton(text, x, y, size) {
-        const padding = 20;
-        const width = this.engine.ctx.measureText(text).width + padding * 2;
-        const height = size + padding;
+    drawButton(text, x, y, width, height) {
+        const hover = this.isMouseOver(x, y, width, height);
         
-        // Fix button hit detection by using explicit width/height
-        const buttonBounds = {
-            x: x - width/2,
-            y: y - height/2,
-            width: width,
-            height: height
-        };
+        this.engine.ctx.fillStyle = hover ? '#8a2be2' : '#4a1a8c';
+        this.engine.ctx.fillRect(x - width/2, y - height/2, width, height);
         
-        const isHovered = this.isMouseInBounds(this.engine.mousePos, buttonBounds);
-
-        // Create gradient for button background
-        const gradient = this.engine.ctx.createLinearGradient(
-            buttonBounds.x, buttonBounds.y,
-            buttonBounds.x + buttonBounds.width, buttonBounds.y + buttonBounds.height
-        );
-        gradient.addColorStop(0, isHovered ? '#8a2be2' : '#4a1a8c');
-        gradient.addColorStop(1, isHovered ? '#9a3cf2' : '#6a2a9c');
-
-        // Draw button background with gradient
-        this.engine.ctx.fillStyle = gradient;
-        this.engine.drawRect(buttonBounds.x, buttonBounds.y, buttonBounds.width, buttonBounds.height);
-        
-        // Draw button border
-        this.engine.ctx.strokeStyle = '#b66dff';
-        this.engine.ctx.lineWidth = 2;
-        this.engine.ctx.strokeRect(buttonBounds.x, buttonBounds.y, buttonBounds.width, buttonBounds.height);
-
-        if (isHovered) {
-            this.engine.ctx.shadowColor = '#8a2be2';
-            this.engine.ctx.shadowBlur = 10;
-        }
-        this.engine.drawText(text, x, y + size/4, size, 'white');
-        this.engine.ctx.shadowBlur = 0;
-
-        return buttonBounds; // Return bounds for hit detection
+        this.engine.ctx.fillStyle = '#FFFFFF';
+        this.engine.ctx.font = '24px Arial'; // Increased font size
+        this.engine.ctx.fillText(text, x, y + 8);
     }
 
     drawButtonParticles(x, y, width, height) {
@@ -318,14 +290,12 @@ class MenuManager {
         const padding = 10;
         const iconSize = 32;
         const spacing = 10;
+        const verticalSpacing = 40;
 
-        // Save context state
+        // Draw coin counter
         this.engine.ctx.save();
-        
-        // Draw coin sprite
         this.engine.pixelSprites.drawSprite('coin', padding, padding, iconSize, iconSize, 'idle');
         
-        // Draw coin amount
         this.engine.ctx.textAlign = 'left';
         this.engine.ctx.textBaseline = 'middle';
         this.engine.ctx.fillStyle = '#FFD700';
@@ -336,7 +306,99 @@ class MenuManager {
             padding + (iconSize / 2)
         );
 
-        // Restore context state
+        // Draw shard counter below coins
+        this.engine.pixelSprites.drawSprite('shard', 
+            padding, 
+            padding + verticalSpacing, 
+            iconSize, 
+            iconSize, 
+            'idle'
+        );
+        
+        this.engine.ctx.fillStyle = '#6EB5FF'; // Light blue for shards
+        this.engine.ctx.fillText(
+            `${this.engine.getShards()}`,
+            padding + iconSize + spacing,
+            padding + verticalSpacing + (iconSize / 2)
+        );
+
+        this.engine.ctx.restore();
+    }
+
+    drawMainMenu() {
+        // Clear debug state changes
+        console.log(`Drawing menu state: ${this.engine.gameState}`);
+
+        this.engine.clear();
+
+        // Draw common background
+        const gradient = this.engine.ctx.createLinearGradient(0, 0, 0, this.engine.canvas.height);
+        gradient.addColorStop(0, '#4a1a8c');
+        gradient.addColorStop(1, '#2d1054');
+        this.engine.ctx.fillStyle = gradient;
+        this.engine.ctx.fillRect(0, 0, this.engine.canvas.width, this.engine.canvas.height);
+
+        // Always draw menu content based on current state
+        switch(this.engine.gameState) {
+            case 'menu':
+                this.drawMainMenu();
+                break;
+            case 'instructions':
+                this.drawInstructions();
+                break;
+            case 'start':
+                this.drawStartPage();
+                break;
+            case 'options':
+                this.drawOptionsMenu();
+                break;
+            default:
+                console.error('Unknown menu state:', this.engine.gameState);
+                break;
+        }
+
+        // Draw coin counter on top of everything
+        this.drawCoinCounter();
+
+        this.lastDrawnState = this.engine.gameState;
+    }
+
+    drawCoinCounter() {
+        const padding = 10;
+        const iconSize = 32;
+        const spacing = 10;
+        const verticalSpacing = 40;
+
+        // Draw coin counter
+        this.engine.ctx.save();
+        this.engine.pixelSprites.drawSprite('coin', padding, padding, iconSize, iconSize, 'idle');
+        
+        this.engine.ctx.textAlign = 'left';
+        this.engine.ctx.textBaseline = 'middle';
+        this.engine.ctx.fillStyle = '#FFD700';
+        this.engine.ctx.font = 'bold 24px Arial';
+        this.engine.ctx.fillText(
+            `${this.engine.getCoins()}`,
+            padding + iconSize + spacing,
+            padding + (iconSize / 2)
+        );
+
+        // Draw shard counter below coins
+        this.engine.pixelSprites.drawSprite('shard', 
+            padding, 
+            padding + verticalSpacing, 
+            iconSize, 
+            iconSize, 
+            'idle'
+        );
+        
+        this.engine.ctx.fillStyle = '#6EB5FF'; // Light blue for shards
+        this.engine.ctx.fillText(
+            `${this.engine.getShards()}`,
+            padding + iconSize + spacing,
+            padding + verticalSpacing + (iconSize / 2)
+        );
+
         this.engine.ctx.restore();
     }
 
@@ -385,6 +447,14 @@ class MenuManager {
 
         this.engine.ctx.shadowBlur = 0;
 
+        // Draw version in bottom left corner
+        this.engine.ctx.save();
+        this.engine.ctx.font = '16px Arial';
+        this.engine.ctx.textAlign = 'left';
+        this.engine.ctx.fillStyle = '#666666';
+        this.engine.ctx.fillText(`v.${this.version}`, 10, this.engine.canvas.height - 10);
+        this.engine.ctx.restore();
+
         // Draw menu options as animated buttons
         this.menuConfig.options.forEach((option, index) => {
             const y = this.engine.canvas.height * (0.4 + index * 0.12);
@@ -393,7 +463,8 @@ class MenuManager {
                 option,
                 this.engine.canvas.width / 2 + wobble,
                 y,
-                this.engine.canvas.height * 0.05
+                this.buttonWidth,
+                this.buttonHeight
             );
         });
     }

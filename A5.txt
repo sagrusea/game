@@ -1,0 +1,49 @@
+double coins potion - 5 shards
+effect last for irl minutes time: TBD
+time scales by potions scale: small large chug TBD/TBD/TBD
+///
+you get shards for completing levels and by a conversion 1200-1
+///
+added chugs
+redisigned speed potion: small large + added chug version for all potions
+///
+Double xp potion - 3 shards
+effect last for irl minutes based on potion scale small large chug : 2/5/10
+///
+New skins:
+King - shard price, comes with abilities
+Farmer - normal price
+Stoner(high af) - cheap af
+samurai - super expensive
+///
+New boxes with new doors:
+** wooden box + mechanical door
+metal box + rusty door
+plastic crate + white door
+///
+New levels and mechanics:
+Mechanics-
+lava -- hurts player, slows down player
+potions -- add new effects to the player like imunity to lava 
+skills
+decorations
+make shop not sell everything at once + limited capacity
+	eg.. you can buy 2 or 3 potions, you can only buy some stuff, eg .. potion 1 isnt availible but potion 2 is etc..
+Another NPC?
+Shop 2 maybe?
+
+Levels:
+atleast 15 new levels and 5 of those using new mechanics
+styled in various styles?
+add grass and other variants
+
+*TBD = to be dicided
+
+Shard system - [x]
+
+
+2 title screens
+each level has diffrent music
+use shards to refresh shop, otherwise wait x minutes
+shard shop and an npc that you talk to(need to say some words or phrases to get awarded stuff 
+or unlock the secret shop, all words and phrases are hashed for sec)

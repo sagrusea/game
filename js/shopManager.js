@@ -154,14 +154,7 @@ class ShopManager {
         // Draw back button
         this.drawBackButton();
 
-        // Draw player's coins
-        this.engine.ctx.save();
-        this.engine.ctx.fillStyle = '#FFD700';
-        this.engine.ctx.font = 'bold 24px Arial';
-        this.engine.ctx.textAlign = 'left';
-        this.engine.pixelSprites.drawSprite('coin', 20, 80, 32, 32, 'idle');
-        this.engine.ctx.fillText(`: ${this.engine.getCoins()}`, 60, 100);
-        this.engine.ctx.restore();
+
 
         // Layout constants
         const itemsPerRow = 3;
@@ -220,7 +213,7 @@ class ShopManager {
                 const description = item.description || 'No description available';
                 this.wrapText(this.engine.ctx, description, x + itemWidth/2, y + 130, itemWidth - 20, 20);
 
-                // Draw price with coin icon
+                // Draw price with  icon
                 this.engine.pixelSprites.drawSprite('coin', x + itemWidth/2 - 32, y + itemHeight - 50, 24, 24, 'idle');
                 this.engine.ctx.fillStyle = '#FFD700';
                 this.engine.ctx.fillText(`${item.price}`, x + itemWidth/2 + 20, y + itemHeight - 35);
@@ -259,6 +252,37 @@ class ShopManager {
             this.currentPhrase = this.getRandomPhrase();
             this.phaseChangeTime = Date.now();
         }
+
+        // Draw currency counters
+        const padding = 10;
+        const iconSize = 32;
+        const spacing = 10;
+        const verticalSpacing = 40;
+
+        // Draw coin counter
+        this.engine.ctx.save();
+        this.engine.pixelSprites.drawSprite('coin', padding, padding, iconSize, iconSize, 'idle');
+        
+        this.engine.ctx.textAlign = 'left';
+        this.engine.ctx.textBaseline = 'middle';
+        this.engine.ctx.fillStyle = '#FFD700';
+        this.engine.ctx.font = 'bold 24px Arial';
+        this.engine.ctx.fillText(
+            `${this.engine.getCoins()}`,
+            padding + iconSize + spacing,
+            padding + (iconSize / 2)
+        );
+
+        // Draw shards with centered text alignment
+        this.engine.pixelSprites.drawSprite('shard', padding, padding + verticalSpacing, iconSize, iconSize, 'idle');
+        this.engine.ctx.fillStyle = '#6EB5FF';
+        this.engine.ctx.fillText(
+            `${this.engine.getShards()}`,
+            padding + iconSize + spacing, // Adjusted x position for center alignment
+            padding + verticalSpacing + iconSize/2
+        );
+
+        this.engine.ctx.restore();
     }
 
     drawPaginationControls(totalPages) {

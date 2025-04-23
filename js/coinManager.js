@@ -1,18 +1,29 @@
-class CoinManager {
+class CurrencyManager {
     constructor() {
-        this.storageKey = 'gameCoins';
+        this.coinsKey = 'gameCoins';
+        this.shardsKey = 'gameShards';
     }
 
     saveCoins(amount) {
-        localStorage.setItem(this.storageKey, amount.toString());
+        localStorage.setItem(this.coinsKey, amount.toString());
+    }
+
+    saveShards(amount) {
+        localStorage.setItem(this.shardsKey, amount.toString());
     }
 
     loadCoins() {
-        const savedCoins = localStorage.getItem(this.storageKey);
+        const savedCoins = localStorage.getItem(this.coinsKey);
         return savedCoins ? parseInt(savedCoins) : 0;
     }
 
-    clearCoins() {
-        localStorage.removeItem(this.storageKey);
+    loadShards() {
+        const savedShards = localStorage.getItem(this.shardsKey);
+        return savedShards ? parseInt(savedShards) : 0;
+    }
+
+    clearCurrency() {
+        localStorage.removeItem(this.coinsKey);
+        localStorage.removeItem(this.shardsKey);
     }
 }
