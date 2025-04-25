@@ -45,7 +45,7 @@ Shard system - [x]
 Shard rewarding - [x]
 New potions + potion variant chug - []
 Shop rework - [Work]
-
+new boxes and doors and plates - [Work]
 
 
 2 title screens

@@ -102,6 +102,26 @@ class LevelManager {
                 base: false,
                 requiresBase: ['floor'],
                 combinable: []
+            },
+            'plate_rusty': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'plate_metal': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'door_rusty': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
+            },
+            'door_metal': {
+                base: false,
+                requiresBase: ['floor'],
+                combinable: []
             }
         };
         this.floorTypes = {
@@ -140,6 +160,11 @@ class LevelManager {
         };
         this.blocks = []; // Add this line to initialize blocks array
         this.doors = []; // Add this line to initialize doors array
+        this.plateTypes = {
+            'p': 'plate_normal',
+            'q': 'plate_rusty',
+            'w': 'plate_metal'
+        };
     }
 
     async loadLevels() {
@@ -302,6 +327,24 @@ class LevelManager {
         }
 
         this.engine.markLevelCompleted(this.currentLevelName);
+
+        const coinsValue = this.engine.inventory.levelCoinValue || 0;
+        // ...existing code...
+        
+        // Update coins display to show total value
+        document.getElementById('coinsCollected').textContent = 
+            `Coins value collected: ${coinsValue}`;
+        
+        // Add coins to global count
+        if (coinsValue > 0) {
+            this.engine.addCoinsToGlobal(coinsValue, true);
+        }
+
+        // Reset level coin tracking
+        this.engine.inventory.levelCoins = 0;
+        this.engine.inventory.levelCoinValue = 0;
+        
+        // ...rest of showCompletion code...
     }
 
     hideCompletion() {
@@ -418,19 +461,28 @@ class LevelManager {
                         this.currentLevel[y][x] = '.';
                         break;
                     case 'R':
-                        this.blocks.push({ type: 'rusty_box', x, y, pushable: true });
+                        this.movableBlocks.set(`${x},${y}`, { x, y, type: 'rusty_box' });
+                        this.currentLevel[y][x] = '.';
                         break;
                     case 'M':
-                        this.blocks.push({ type: 'metal_box', x, y, pushable: true });
+                        this.movableBlocks.set(`${x},${y}`, { x, y, type: 'metal_box' });
+                        this.currentLevel[y][x] = '.';
                         break;
-                    case 'C':
-                        this.blocks.push({ type: 'crate', x, y, pushable: false });
+                    case 'X':
+                        this.movableBlocks.set(`${x},${y}`, { x, y, type: 'crate' });
+                        this.currentLevel[y][x] = '.';
                         break;
                     case 'U':
                         this.doors.push({ type: 'door_rusty', x, y, color: 'rusty' });
                         break;
                     case 'T':
                         this.doors.push({ type: 'door_metal', x, y, color: 'metal' });
+                        break;
+                    default:
+                        if (tile.startsWith('H')) {
+                            this.placeCollectible(tile, x, y); // Pass the full H1-H6 code
+                            this.currentLevel[y][x] = '.';
+                        }
                         break;
                 }
             }
@@ -439,17 +491,38 @@ class LevelManager {
         this.currentLevelName = levelName;
         console.log('Level loaded successfully');
         this.engine.resetLevelCoins();
+        this.engine.inventory.levelCoins = 0;
+        this.engine.inventory.levelCoinValue = 0;
     }
 
     placeCollectible(type, x, y) {
+        if (type.startsWith('H')) {
+            const rarity = parseInt(type.substring(1)) || 1;
+            const collectible = {
+                type: 'alfashr',  // Changed from 'shard' to 'alfashr'
+                x: x,
+                y: y,
+                rarity: rarity,
+                value: rarity * 2 // Base value multiplied by rarity
+            };
+            this.collectibles.push(collectible);
+            return;
+        }
+
+        let value = 1;
+        if (type === 'bronze_coin') {
+            value = Math.floor(Math.random() * 11) + 10; // 10-20
+        } else if (type === 'silver_coin') {
+            value = Math.floor(Math.random() * 51) + 50; // 50-100
+        } else if (type === 'gold_coin') {
+            value = Math.floor(Math.random() * 301) + 200; // 200-500
+        }
+
         const collectible = {
             type: type,
             x: x,
             y: y,
-            value: type === 'bronze_coin' ? 1 : 
-                   type === 'silver_coin' ? 5 : 
-                   type === 'gold_coin' ? 10 :
-                   type === 'shard' ? 1 : 1
+            value: value
         };
         this.collectibles.push(collectible);
     }
@@ -457,7 +530,7 @@ class LevelManager {
     checkCollectibles(playerX, playerY) {
         this.collectibles = this.collectibles.filter(item => {
             if (item.x === playerX && item.y === playerY) {
-                if (item.type === 'shard') {
+                if (item.type === 'alfashr') {  // Changed from 'shard' to 'alfashr'
                     this.engine.audio.playSoundEffect('shard_collect');
                     this.engine.inventory.levelShards++;
                     this.engine.addShards(item.value);
@@ -465,16 +538,7 @@ class LevelManager {
                 } else if (item.type.includes('coin')) {
                     this.engine.audio.playSoundEffect('coin');
                     this.engine.inventory.levelCoins++;
-                    
-                    // Safely access potionMultiplier with default value of 1
-                    const multiplier = this.engine.menuManager?.potionMultiplier || 1;
-                    let coinValue = 0;
-                    
-                    if (item.type === 'bronze_coin') coinValue = 1;
-                    else if (item.type === 'silver_coin') coinValue = 5;
-                    else if (item.type === 'gold_coin') coinValue = 10;
-                    
-                    this.engine.inventory.coins += coinValue * multiplier;
+                    this.engine.inventory.levelCoinValue = (this.engine.inventory.levelCoinValue || 0) + item.value;
                     return false;
                 }
             }
@@ -516,8 +580,18 @@ class LevelManager {
                 const blockKey = `${newPos.x},${newPos.y}`;
                 if (this.movableBlocks.has(blockKey)) {
                     const pushPos = this.getPushPosition(newPos);
-                    this.movableBlocks.delete(blockKey);
-                    this.movableBlocks.set(`${pushPos.x},${pushPos.y}`, pushPos);
+                    if (this.canPushBlock(newPos, pushPos)) {
+                        const block = this.movableBlocks.get(blockKey);
+                        this.movableBlocks.delete(blockKey);
+                        this.movableBlocks.set(`${pushPos.x},${pushPos.y}`, {
+                            ...block,
+                            x: pushPos.x,
+                            y: pushPos.y
+                        });
+                        this.currentLevel[newPos.y][newPos.x] = '.';  // Clear the old position
+                    } else {
+                        return; // Can't push the block
+                    }
                 }
 
                 this.handleInteraction(newPos);
@@ -764,6 +838,18 @@ class LevelManager {
                 case 'Y':
                     layers.push('key_red');
                     break;
+                case 'U':
+                    layers.push('door_rusty');
+                    break;
+                case 'T':
+                    layers.push('door_metal');
+                    break;
+                case 'q':
+                    layers.push('plate_rusty');
+                    break;
+                case 'w':
+                    layers.push('plate_metal');
+                    break;
             }
 
             // Add collectibles
@@ -809,6 +895,10 @@ class LevelManager {
         // ...existing code...
     }
 
+    calculateCollectedCoinsValue() {
+        return this.engine.inventory.levelCoinValue || 0;
+    }
+
     drawLevel() {
         if (!this.currentLevel || !this.engine.inventory) {
             console.error('No level loaded or inventory not initialized');
@@ -842,7 +932,9 @@ class LevelManager {
         for (const [_, block] of this.movableBlocks) {
             const blockX = offsetX + block.x * tileSize;
             const blockY = offsetY + block.y * tileSize;
-            this.engine.pixelSprites.drawSprite('block', blockX, blockY, tileSize, tileSize);
+            // Use correct sprite name based on block type
+            const spriteType = block.type || 'block';
+            this.engine.pixelSprites.drawSprite(spriteType, blockX, blockY, tileSize, tileSize);
         }
 
         // Draw collectibles with correct offsets
@@ -939,7 +1031,7 @@ class LevelManager {
         this.engine.ctx.fillStyle = '#FFD700';
         this.engine.ctx.font = 'bold 24px Arial';
         this.engine.ctx.fillText(
-            `${this.calculateCurrentLevelValue()}`,
+            `${this.calculateCollectedCoinsValue()}`,  // Changed from calculateCurrentLevelValue
             padding + iconSize + spacing,
             this.engine.canvas.height - padding - iconSize/2
         );
@@ -1080,7 +1172,8 @@ class LevelManager {
         return (
             (box.type === 'block' && door.type === 'door_normal') ||
             (box.type === 'rusty_box' && door.type === 'door_rusty') ||
-            (box.type === 'metal_box' && door.type === 'door_metal')
+            (box.type === 'metal_box' && door.type === 'door_metal') ||
+            (box.type === 'crate' && door.type === 'door_wooden')
         );
     }
 }

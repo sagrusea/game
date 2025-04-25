@@ -17,3 +17,84 @@ sprite "block" {
         }
     }
 }
+sprite "rusty_box" {
+    size: 8x8
+    colors {
+        A: #DE2E03
+        B: #A22203
+        C: #C02803
+        D: #841C02
+        E: #B12503
+        F: #751902
+        G: #FC3403
+        H: #ED3103
+        I: #FC5931
+        J: #931F02
+        K: #661602
+        L: #FC4012
+        M: #CF2B03
+    }
+    frames {
+        idle {
+            D B B B C C C E
+            B C H A A C I J
+            C E F A C D G E
+            B A A A A A C B
+            D C A C A A A D
+            B B K A C F A J
+            B A A C A L G B
+            C B G D D B B M
+        }
+    }
+}
+sprite "metal_box" {
+    size: 8x8
+    colors {
+        A: #ACACAC
+        B: #7F7F7F
+        C: #707070
+        D: #878787
+        E: #777777
+        F: #9D9D9D
+        G: #BBBBBB
+        H: #C4C4C4
+        I: #979797
+        J: #A5A5A5
+        K: #BDBDBD
+        L: #959595
+        M: #CACACA
+        N: #D3D3D3
+    }
+    frames {
+        idle {
+            B B I C B D E B
+            D J A F A F F B
+            D A B A K C A C
+            E L A A G A A C
+            B H K H G A A B
+            I A B A A B A B
+            F M K N A A N B
+            C B D E C B C B
+        }
+    }
+}
+
+sprite "crate" {
+    size: 8x8
+    colors {
+        A: #722007
+        B: #7F736F
+    }
+    frames {
+        idle {
+            A A A A A A A A
+            A A B B B B A A
+            A B A B B A B A
+            A B B A A B B A
+            A B B A A B B A
+            A B A B B A B A
+            A A B B B B A A
+            A A A A A A A A
+        }
+    }
+}

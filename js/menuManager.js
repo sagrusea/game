@@ -78,7 +78,7 @@ class MenuManager {
         this.chapterTransition = 0;
         this.buttonWidth = 200; // Increased from default
         this.buttonHeight = 60; // Increased from default
-        this.version = 'A5_2';
+        this.version = 'A5_1.3';
         this.potionEndTime = 0;
         this.potionMultiplier = 1;
     }

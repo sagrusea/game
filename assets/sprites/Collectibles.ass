@@ -89,3 +89,35 @@ sprite "diamond" {
         }
     }
 }
+sprite "alfashr" {
+    size: 8x8
+    colors {
+        A: #522F5F
+        B: #1E1421
+        C: #2F1F34
+        D: #26192A
+        E: #38253E
+        F: #5B3469
+        G: #643973
+        H: #402C47
+        I: #2F1B37
+        J: #492557
+        K: #8846A2
+        L: #7F4197
+        M: #763C8C
+        N: #40254B
+        O: #0D080E
+    }
+    frames {
+        idle {
+            . . . . . . . .
+            . . C B C D . .
+            . E G A A F B .
+            . H I J K A B .
+            . B A L M F D .
+            . B A N A A B .
+            . . C E B O . .
+            . . . . . . . .
+        }
+    }
+}
